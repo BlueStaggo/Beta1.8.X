@@ -18452,22 +18452,7 @@
  						}
  
  						for(int var7 = 0; var7 < 9; ++var7) {
-@@ -1098,6 +1081,14 @@
- 		}
- 
- 		if(this.theWorld != null) {
-+			if(Keyboard.isKeyDown(Keyboard.KEY_F6)) {
-+				this.theWorld.field_35465_L -= 0.001D;
-+			}
-+
-+			if(Keyboard.isKeyDown(Keyboard.KEY_F7)) {
-+				this.theWorld.field_35465_L += 0.001D;
-+			}
-+
- 			if(this.thePlayer != null) {
- 				++this.joinPlayerCounter;
- 				if(this.joinPlayerCounter == 30) {
-@@ -1130,6 +1121,7 @@
+@@ -1130,6 +1113,7 @@
  			if(!this.isGamePaused || this.isMultiplayerWorld()) {
  				this.theWorld.setAllowedMobSpawns(this.gameSettings.difficulty > 0, true);
  				this.theWorld.tick();
@@ -18475,7 +18460,7 @@
  			}
  
  			if(!this.isGamePaused && this.theWorld != null) {
-@@ -1177,6 +1169,24 @@
+@@ -1177,6 +1161,24 @@
  				this.statFileWriter.readStat(StatList.loadWorldStat, 1);
  				this.statFileWriter.readStat(StatList.startGameStat, 1);
  				this.changeWorld2(var5, "Loading level");
@@ -18500,7 +18485,7 @@
  			}
  		}
  
-@@ -1229,6 +1239,228 @@
+@@ -1229,6 +1231,228 @@
  
  	}
  
@@ -18729,7 +18714,7 @@
  	public void changeWorld1(World var1) {
  		this.changeWorld2(var1, "");
  	}
-@@ -1306,6 +1538,8 @@
+@@ -1306,6 +1530,8 @@
  			}
  
  			this.renderViewEntity = this.thePlayer;
@@ -18738,7 +18723,7 @@
  		} else {
  			this.thePlayer = null;
  		}
-@@ -1315,7 +1549,7 @@
+@@ -1315,7 +1541,7 @@
  	}
  
  	private void convertMapFormat(String var1, String var2) {
@@ -18747,7 +18732,7 @@
  		this.loadingScreen.displayLoadingString("This may take a while :)");
  		this.saveLoader.convertMapFormat(var1, this.loadingScreen);
  		this.startWorld(var1, var2, new WorldSettings(0L, 0, true));
-@@ -1411,8 +1645,22 @@
+@@ -1411,8 +1637,22 @@
  	}
  
  	public void respawn(boolean var1, int var2) {
@@ -18772,7 +18757,7 @@
  		}
  
  		ChunkCoordinates var3 = null;
-@@ -1447,8 +1695,13 @@
+@@ -1447,8 +1687,13 @@
  			this.theWorld.setEntityDead(this.thePlayer);
  		}
  
@@ -18786,7 +18771,7 @@
  		this.thePlayer.dimension = var2;
  		this.renderViewEntity = this.thePlayer;
  		this.thePlayer.preparePlayerToSpawn();
-@@ -1532,7 +1785,7 @@
+@@ -1532,7 +1777,7 @@
  	}
  
  	public static boolean isAmbientOcclusionEnabled() {
