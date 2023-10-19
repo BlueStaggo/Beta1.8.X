@@ -2647,7 +2647,7 @@
 +}
 --- /dev/null
 +++ net/minecraft/src/GuiUpdate.java
-@@ -1,0 +1,63 @@
+@@ -1,0 +1,65 @@
 +package net.minecraft.src;
 +
 +import org.lwjgl.opengl.GL11;
@@ -2656,16 +2656,16 @@
 +
 +public class GuiUpdate extends GuiScreen {
 +	private static final String[] tips = {
-+			"Tip: Criss cross your quartz for an island getaway!",
-+			"Tip: Unlease fire on the crystal frame and whoosh up into the skies!",
++			"Tip: Criss cross craft your quartz for an island getaway!",
++			"Tip: Unlease fire on the crystal frame and whoosh up into the skies (or your end)!",
 +			"Tip: Teach a man to fish and you feed him with new wonders!",
 +			"Tip: A quartz compass is excellent at guiding lost travellers!",
 +			"Tip: Under specific conditions, food can be an explosive substance!",
 +			"Tip: Please refrain from looking at any abnormal endermen.",
-+			"Tip: The End is desolate; we are working on this!",
++			"Tip: The End is desolate; we are working on this.",
 +			"Tip: Feel free to take a sip from glass bottles!",
-+			"Tip: Criss cross your quartz with copper for a special getaway!",
-+			"Tip: Beware the enderman, the blaze and the copper!",
++			"Tip: Criss cross craft your quartz with copper for a special getaway!",
++			"Tip: Endermen, blazes and copper are an interesting mix!",
 +			"Tip: Please report bugs to https://bugs.mojang.com/projects/MC."
 +	};
 +	private static final Random random = new Random();
@@ -2690,7 +2690,9 @@
 +		if (this.repersonalize) {
 +			Personalization.repersonalize();
 +		}
-+		this.game.refreshWorld();
++		if (this.game.theWorld != null) {
++			this.game.refreshWorld();
++		}
 +		this.game.displayGuiScreen(null);
 +	}
 +
@@ -2761,7 +2763,7 @@
 +		if (meta == 1) {
 +			return Personalization.endSky ? 0 : 0x0000FF;
 +		} else if (meta == 2) {
-+			return 0x55FFFF;
++			return 0xFFFF00;
 +		}
 +		return super.colorMultiplier(var1, var2, var3, var4);
 +	}
@@ -4050,16 +4052,10 @@
  
 --- net/minecraft/src/ItemFlintAndSteel.java
 +++ net/minecraft/src/ItemFlintAndSteel.java
-@@ -8,6 +8,19 @@
+@@ -8,6 +8,13 @@
  	}
  
  	public boolean onItemUse(ItemStack var1, EntityPlayer var2, World var3, int var4, int var5, int var6, int var7) {
-+		if (var2.dimension == 2) {
-+			var3.playSoundEffect((double)var4 + 0.5D, (double)var5 + 0.5D, (double)var6 + 0.5D, "random.breath", 1.0F, itemRand.nextFloat() * 0.2F + 0.9F);
-+			var1.stackSize--;
-+			return true;
-+		}
-+
 +		if (var3.getBlockId(var4, var5, var6) == Block.skyPortalFrame.blockID && var3.getBlockMetadata(var4, var5, var6) == 0) {
 +			var3.playSoundEffect((double)var4 + 0.5D, (double)var5 + 0.5D, (double)var6 + 0.5D, "fire.ignite", 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
 +			var3.setBlockAndMetadataWithNotify(var4, var5, var6, Block.skyPortalFrame.blockID, 1);
@@ -4070,6 +4066,18 @@
  		if(var7 == 0) {
  			--var5;
  		}
+@@ -39,6 +46,11 @@
+ 			if(var8 == 0) {
+ 				var3.playSoundEffect((double)var4 + 0.5D, (double)var5 + 0.5D, (double)var6 + 0.5D, "fire.ignite", 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
+ 				var3.setBlockWithNotify(var4, var5, var6, Block.fire.blockID);
++
++				if (var2.dimension == 2 && var3.getBlockId(var4, var5, var6) == Block.fire.blockID) {
++					var3.playSoundEffect((double)var4 + 0.5D, (double)var5 + 0.5D, (double)var6 + 0.5D, "random.breath", 1.0F, itemRand.nextFloat() * 0.2F + 0.9F);
++					var3.setBlockWithNotify(var4, var5, var6, 0);
++				}
+ 			}
+ 
+ 			var1.damageItem(1, var2);
 --- net/minecraft/src/EntityList.java
 +++ net/minecraft/src/EntityList.java
 @@ -98,6 +98,11 @@
@@ -4206,7 +4214,7 @@
  	}
 --- /dev/null
 +++ net/minecraft/src/Personalization.java
-@@ -1,0 +1,949 @@
+@@ -1,0 +1,977 @@
 +package net.minecraft.src;
 +
 +import net.minecraft.client.Minecraft;
@@ -4221,18 +4229,22 @@
 +public final class Personalization {
 +	public static final boolean DEMO_MODE = false;
 +	public static final boolean DEBUG_MODE = false;
++	private static final byte LATEST_SAVE_VERSION = 1;
 +
-+	public static final Xoroshiro128PlusPlus rand = new Xoroshiro128PlusPlus();
++	public static final Random rand = new Random();
 +	public static NBTTagCompound properties;
 +	public static String version = null;
 +	public static String preset = null;
-+	public static boolean controlPanelUnlocked = false;
-+	private static boolean vanillaMode = false;
 +	private static int updateHash;
++	private static byte saveVersion = LATEST_SAVE_VERSION;
 +
 +	public static float betaness = 0.0F;
 +	public static float weirdness = 0.0F;
 +	public static float chaos = 0.0F;
++
++	public static boolean controlPanelUnlocked = true;
++	public static boolean vanillaMode = false;
++	public static boolean chaosEffects = true;
 +
 +	public static long noiseSeed = DEMO_MODE ? 0 : rand.nextLong();
 +	private static NoiseGeneratorPerlin betanessNoise;
@@ -4338,7 +4350,6 @@
 +		}
 +
 +		version = null;
-+		rand.longJump();
 +		setupNoise();
 +		try {
 +			loadOptions();
@@ -4391,18 +4402,19 @@
 +		betaness = properties.getFloat("Betaness");
 +		weirdness = properties.getFloat("Weirdness");
 +		chaos = properties.getFloat("Chaos");
++		days = properties.getLong("Days");
++		saveVersion = properties.getByte("SaveVersion");
 +		controlPanelUnlocked = properties.getBoolean("ControlPanelUnlocked");
++		chaosEffects = !properties.hasKey("ChaosEffects") || properties.getBoolean("ChaosEffects");
++
 +		if (properties.hasKey("NoiseSeed")) {
 +			noiseSeed = properties.getLong("NoiseSeed");
 +		} else {
-+			noiseSeed = rand.nextLong();
++			noiseSeed = 0;
++			while (noiseSeed == 0) {
++				noiseSeed = rand.nextLong();
++			}
 +		}
-+		if (properties.hasKey("Days")) {
-+			days = properties.getLong("Days");
-+		} else {
-+			days = 0;
-+		}
-+
 +		preset = properties.getString("Preset");
 +		setPreset(preset);
 +
@@ -4433,9 +4445,11 @@
 +		properties.setFloat("Betaness", betaness);
 +		properties.setFloat("Weirdness", weirdness);
 +		properties.setFloat("Chaos", chaos);
-+		properties.setBoolean("ControlPanelUnlocked", controlPanelUnlocked);
 +		properties.setLong("Days", days);
 +		properties.setLong("NoiseSeed", noiseSeed);
++		properties.setByte("SaveVersion", LATEST_SAVE_VERSION);
++		properties.setBoolean("ControlPanelUnlocked", controlPanelUnlocked);
++		properties.setBoolean("ChaosEffects", chaosEffects);
 +		if (preset == null || preset.isEmpty() || !presets.contains(preset)) {
 +			properties.setTag("Preset", null);
 +		} else {
@@ -4478,6 +4492,17 @@
 +		}
 +	}
 +
++	public static GuiScreen getStartScreen() {
++		if (DEMO_MODE) {
++			return new GuiDemoPreset();
++		}
++
++		switch (saveVersion) {
++			case 0: return new GuiStupid();
++			default: return new GuiMainMenu();
++		}
++	}
++
 +	public static void adjustValues() {
 +		if (noiseSeed == 0 || DEMO_MODE) {
 +			return;
@@ -4487,11 +4512,11 @@
 +		float wRange = getWeirdnessRange();
 +
 +		days++;
-+		chaos = Math.min(Math.max(chaos + (rand.nextFloat() * 0.05F - 0.02F + chaos * 0.01F), 0.0F), 2.0F);
++		if (chaosEffects) chaos = Math.min(Math.max(chaos + (rand.nextFloat() * 0.05F - 0.02F + chaos * 0.01F), 0.0F), 2.0F);
 +		betaBias /= 100000.0F;
 +		betaBias += (float)betanessNoise.func_801_a(days / 4.0D, 0.0D) * 0.5F;
-+		betaness = Math.min(Math.max(betaness + (rand.nextFloat() - 0.5F) * bRange, -bRange), bRange);
-+		weirdness = Math.min(Math.max(weirdness + (rand.nextFloat() - 0.5F) / 2.0F * wRange, -wRange), wRange);
++		betaness = Math.min(Math.max(betaness + (float)betanessNoise.func_801_a(days / 3.0D, 0.0D) / 2.0F * bRange, -bRange), bRange);
++		weirdness = Math.min(Math.max(weirdness + (float)betanessNoise.func_801_a(-days / 3.0D, 100000.0D) / 2.0F * wRange - weirdness * 0.2F, -wRange), wRange);
 +		betaBias = 0.0F;
 +	}
 +
@@ -4503,7 +4528,7 @@
 +		}
 +
 +		NBTTagCompound presetTag = properties.getCompoundTag("Presets").getCompoundTag(preset);
-+		if (presetTag.func_28110_c().size() == 0) return;
++		if (presetTag.func_28110_c().isEmpty()) return;
 +
 +		NBTTagCompound presetSettings = presetTag.getCompoundTag("Settings");
 +		for (NBTBase setting : (Collection<NBTBase>)presetSettings.func_28110_c()) {
@@ -4630,7 +4655,7 @@
 +		fancyGrass = opt("fancyGrass", !(doStrongBeta() && doWeird()));
 +		classicArm = opt("classicArm", doExtBeta() && doVeryWeird());
 +		thickFog = opt("thickFog", !(doStrongAdventure() && doWeird() || doExtAdventure()));
-+		thickerFog = opt("thickerFog", doEarlyAdventure() && doAltWeird() || doChaos() && thickFog);
++		thickerFog = opt("thickerFog", doChaos());
 +		fuzzyGrass = opt("fuzzyGrass", !doEarlyAdventure());
 +		fullBlockChests = opt("fullBlockChests", doWeakBeta());
 +		Block.opaqueCubeLookup[Block.chest.blockID] = fullBlockChests;
@@ -4948,6 +4973,7 @@
 +
 +		((BiomeGenHills)extremeHills).stony = opt("biomes.extremeHills.stony", doStrongAdventure() && doAltWeird() || doExtAdventure());
 +		((BiomeGenHills)extremeHills).snowy = opt("biomes.extremeHills.snowy", doStrongAdventure() && doAltWeird() || doExtAdventure());
++		((BiomeGenHills)extremeHills).trees = opt("biomes.extremeHills.trees", doStrongAdventure() && doAltWeird() || doExtAdventure());
 +		((BiomeGenHills)extremeHills).spruce = opt("biomes.extremeHills.spruce", doStrongAdventure() && doAltWeird() || doExtAdventure());
 +
 +		head("biomes.spawning");
@@ -5020,6 +5046,10 @@
 +	}
 +
 +	public static float chaotify(float x) {
++		if (!chaosEffects) {
++			return x;
++		}
++
 +		float chaosFactor = chaos - 1.0F;
 +		chaosFactor *= chaosFactor * Math.signum(chaosFactor);
 +		chaosFactor = Math.min(Math.max(chaosFactor, 0.0F), 1.0F);
@@ -5027,11 +5057,17 @@
 +	}
 +
 +	public static float getBetanessRange() {
-+		return Math.min(1.0F + chaos * 2.0F, 3.0F);
++		if (!chaosEffects) {
++			return 3.0F;
++		}
++		return MathHelper.clamp(1.0F + chaos * 2.0F, 1.0F, 3.0F);
 +	}
 +
 +	public static float getWeirdnessRange() {
-+		return Math.min(0.5F + chaos, 1.0F);
++		if (!chaosEffects) {
++			return 1.0F;
++		}
++		return MathHelper.clamp(chaos, 0.0F, 1.0F);
 +	}
 +
 +	public static boolean chance50() {
@@ -5145,15 +5181,15 @@
 +	// CHAOS
 +
 +	public static boolean doChaos() {
-+		return (Personalization.preset == null || Personalization.preset.isEmpty()) && rand.nextFloat() < chaos / 2.0F;
++		return (Personalization.preset == null || Personalization.preset.isEmpty()) && chaosEffects && rand.nextFloat() < chaos / 2.0F;
 +	}
 +
 +	public static boolean doEarlyChaos() {
-+		return (Personalization.preset == null || Personalization.preset.isEmpty()) && rand.nextFloat() < chaos;
++		return (Personalization.preset == null || Personalization.preset.isEmpty()) && chaosEffects && rand.nextFloat() < chaos;
 +	}
 +
 +	public static boolean doLateChaos() {
-+		return (Personalization.preset == null || Personalization.preset.isEmpty()) && rand.nextFloat() < chaos - 1.0F;
++		return (Personalization.preset == null || Personalization.preset.isEmpty()) && chaosEffects && rand.nextFloat() < chaos - 1.0F;
 +	}
 +}
 --- /dev/null
@@ -6710,7 +6746,7 @@
  import javax.xml.parsers.DocumentBuilder;
  import javax.xml.parsers.DocumentBuilderFactory;
  import net.minecraft.client.Minecraft;
-@@ -31,6 +29,34 @@
+@@ -31,6 +29,36 @@
  
  	public void run() {
  		try {
@@ -6718,11 +6754,13 @@
 +			this.loadPackedResource("/net/minecraft/client/remixquick.ogg", "newsound/random/remixquick.ogg");
 +			this.loadPackedResource("/net/minecraft/client/amalgamation.ogg", "newsound/random/amalgamation.ogg");
 +			this.loadPackedResource("/net/minecraft/client/overamalgamation.ogg", "newsound/random/overamalgamation.ogg");
++			this.loadPackedResource("/net/minecraft/client/biggerexplosion.ogg", "newsound/mob/biggerexplosion.ogg");
++
 +			this.loadPackedResource("/net/minecraft/client/offices.ogg", "streaming/offices.ogg");
 +			this.loadPackedResource("/net/minecraft/client/offices_intro.ogg", "streaming/offices_intro.ogg");
 +			this.loadPackedResource("/net/minecraft/client/calm4.ogg", "music/calm4.ogg");
-+			this.loadPackedResource("/net/minecraft/client/biggerexplosion.ogg", "newsound/mob/biggerexplosion.ogg");
 +			this.loadPackedResource("/net/minecraft/client/hotel.ogg", "streaming/hotel.ogg");
++			this.loadPackedResource("/net/minecraft/client/noway.ogg", "streaming/noway.ogg");
 +
 +			this.loadPackedResource("/net/minecraft/client/endermen/death.ogg", "newsound/mob/endermen/death.ogg");
 +			this.loadPackedResource("/net/minecraft/client/endermen/hit#.ogg", "newsound/mob/endermen/hit#.ogg", 4);
@@ -6745,7 +6783,7 @@
  			URL var1 = new URL("http://s3.amazonaws.com/MinecraftResources/");
  			DocumentBuilderFactory var2 = DocumentBuilderFactory.newInstance();
  			DocumentBuilder var3 = var2.newDocumentBuilder();
-@@ -58,6 +84,21 @@
+@@ -58,6 +86,21 @@
  			var13.printStackTrace();
  		}
  
@@ -7380,7 +7418,7 @@
 +		}
 +
 +		(this.showPresets ? this.presetSlotContainer : this.optionSlotContainer).drawScreen(var1, var2, var3);
-+		this.drawCenteredString(this.fontRenderer, "Beta 1.8.X Control Panel", this.width / 2, 20, 0xFFFFFF);
++		this.drawCenteredString(this.fontRenderer, "Beta 1.8.X v1.0.1 Control Panel", this.width / 2, 20, 0xFFFFFF);
 +		this.drawString(this.fontRenderer, "Betaness: " + (int)(Personalization.betaness * 100.0F) / 100.0F, 2, 2, 0x2a7f2a);
 +		this.drawString(this.fontRenderer, "Weirdness: " + (int)(Personalization.weirdness * 100.0F) / 100.0F, 2, 12, 0x2a2a7f);
 +		this.drawString(this.fontRenderer, "Chaos: " + (int)(Personalization.chaos * 100.0F) / 100.0F, 2, 22, 0x7f2a2a);
@@ -8383,7 +8421,7 @@
  
  											var38.setLocationAndAngles((double)var25, (double)var26, (double)var27, var0.rand.nextFloat() * 360.0F, 0.0F);
  											if(var38.getCanSpawnHere()) {
-+												if (var36 != EnumCreatureType.waterCreature && Personalization.doChaos() && var0.rand.nextInt(1000) == 0) {
++												if (var36 != EnumCreatureType.waterCreature && (Personalization.doChaos() || Personalization.googlyStaggo) && var0.rand.nextInt(1000) == 0) {
 +													var38 = new EntityFakePlayer(var0);
 +													var38.setLocationAndAngles((double)var25, (double)var26, (double)var27, var0.rand.nextFloat() * 360.0F, 0.0F);
 +												}
@@ -8493,7 +8531,7 @@
  					}
 --- /dev/null
 +++ net/minecraft/src/GuiStatic.java
-@@ -1,0 +1,72 @@
+@@ -1,0 +1,78 @@
 +package net.minecraft.src;
 +
 +import net.minecraft.client.Minecraft;
@@ -8504,6 +8542,7 @@
 +public class GuiStatic extends GuiScreen {
 +	private static final Random rand = new Random();
 +	private final Minecraft mc;
++	public float forcedStrength;
 +
 +	public GuiStatic(Minecraft mc) {
 +		this.mc = mc;
@@ -8513,7 +8552,7 @@
 +		if (this.mc.thePlayer != null) {
 +			return this.mc.thePlayer.staticStrength;
 +		}
-+		return 0.0F;
++		return this.forcedStrength;
 +	}
 +
 +	private int getNoiseColor() {
@@ -8554,15 +8593,20 @@
 +			this.drawGradientRectHorizontal(0, y, var6, y + 1, getNoiseColor(), getNoiseColor());
 +		}
 +
-+		if (this.getStrength() >= 1.0F && this.mc.thePlayer != null) {
-+			this.mc.thePlayer.staticStrength = 0.0F;
-+			if (this.mc.thePlayer.dimension != 3) {
-+				this.mc.thePlayer.angeredNotch = true;
-+				this.mc.displayGuiScreen(new GuiRemix().fightNotch());
++		if (this.getStrength() >= 1.0F) {
++			if (this.mc.thePlayer != null) {
++				this.mc.thePlayer.staticStrength = 0.0F;
++				if (this.mc.thePlayer.dimension != 3) {
++					this.mc.thePlayer.angeredNotch = true;
++					this.mc.displayGuiScreen(new GuiRemix().fightNotch());
++				} else {
++					this.mc.thePlayer.angeredNotch = false;
++					this.mc.displayGuiScreen(new GuiRemix().beatTheGame());
++				}
 +			} else {
-+				this.mc.thePlayer.angeredNotch = false;
-+				this.mc.displayGuiScreen(new GuiRemix().beatTheGame());
++				this.mc.displayGuiScreen(new GuiRemix().resetValues());
 +			}
++			this.forcedStrength = 0.0F;
 +		}
 +	}
 +}
@@ -10654,14 +10698,16 @@
  				var6.onBlockDestroyedByPlayer(var5, var1, var2, var3, var7);
  			}
  
-@@ -60,6 +61,13 @@
+@@ -60,6 +61,15 @@
  	}
  
  	public void updateController() {
 +		if (this.mc.thePlayer.angeredNotch) {
 +			this.mc.sndManager.playBossMusic();
 +		} else if (this.mc.thePlayer.dimension == 2 && this.mc.thePlayer.posY < ChunkProviderOffices.height * 7) {
-+			this.mc.sndManager.playOfficeMusic();
++			if (this.mc.thePlayer.ticksExisted > 20) {
++				this.mc.sndManager.playOfficeMusic();
++			}
 +		} else {
 +			this.mc.sndManager.playRandomMusicIfReady();
 +		}
@@ -11106,7 +11152,7 @@
  				if(this.ticksBeforeMusic > 0) {
  					--this.ticksBeforeMusic;
  					return;
-@@ -95,9 +115,17 @@
+@@ -95,9 +115,18 @@
  
  				SoundPoolEntry var1 = this.soundPoolMusic.getRandomSound();
  				if(var1 != null) {
@@ -11117,14 +11163,15 @@
  					this.ticksBeforeMusic = this.rand.nextInt(12000) + 12000;
  					sndSystem.backgroundMusic("BgMusic", var1.soundUrl, var1.soundName, false);
  					sndSystem.setVolume("BgMusic", this.options.musicVolume);
-+					if (Personalization.preset == null || Personalization.preset.isEmpty()) {
++					if ((Personalization.preset == null || Personalization.preset.isEmpty())
++							&& Personalization.chaosEffects || this.options.mc.thePlayer.dimension == 2) {
 +						sndSystem.setPitch("BgMusic", this.options.mc.thePlayer.dimension == 2 ? 0.5F
 +								: 1.0F + (rand.nextFloat() - 0.5F) * Personalization.chaos / 2.0F);
 +					}
  					sndSystem.play("BgMusic");
  				}
  			}
-@@ -178,6 +206,8 @@
+@@ -178,6 +207,8 @@
  		if(loaded && this.options.soundVolume != 0.0F) {
  			SoundPoolEntry var4 = this.soundPoolSounds.getRandomSoundFromSoundPool(var1);
  			if(var4 != null) {
@@ -11133,7 +11180,7 @@
  				this.latestSoundID = (this.latestSoundID + 1) % 256;
  				String var5 = "sound_" + this.latestSoundID;
  				sndSystem.newSource(false, var5, var4.soundUrl, var4.soundName, false, 0.0F, 0.0F, 0.0F, 0, 0.0F);
-@@ -185,12 +215,113 @@
+@@ -185,12 +216,131 @@
  					var2 = 1.0F;
  				}
  
@@ -11218,11 +11265,29 @@
 +	public void playControlPanelMusic() {
 +		if(loaded && this.options.musicVolume != 0.0F) {
 +			if(!sndSystem.playing("ControlPanelMusic")) {
++				this.stopAllMusic();
 +				File file = new File(Minecraft.getMinecraftDir(), "/resources/streaming/hotel.ogg");
 +
 +				try {
 +					sndSystem.backgroundMusic("ControlPanelMusic", file.toURI().toURL(), file.getName(), true);
 +					sndSystem.setVolume("ControlPanelMusic", this.options.musicVolume);
++					sndSystem.play("ControlPanelMusic");
++				} catch (MalformedURLException e) {
++					e.printStackTrace();
++				}
++			}
++		}
++	}
++
++	public void playSecretMusic() {
++		if(loaded && this.options.musicVolume != 0.0F) {
++			if(!sndSystem.playing("ControlPanelMusic")) {
++				this.stopAllMusic();
++				File file = new File(Minecraft.getMinecraftDir(), "/resources/streaming/noway.ogg");
++
++				try {
++					sndSystem.backgroundMusic("ControlPanelMusic", file.toURI().toURL(), file.getName(), true);
++					sndSystem.setVolume("ControlPanelMusic", this.options.musicVolume * 0.5F);
 +					sndSystem.play("ControlPanelMusic");
 +				} catch (MalformedURLException e) {
 +					e.printStackTrace();
@@ -12882,9 +12947,123 @@
  		}
  
  		return var1;
+--- /dev/null
++++ net/minecraft/src/GuiStupid.java
+@@ -1,0 +1,111 @@
++package net.minecraft.src;
++
++import org.lwjgl.opengl.GL11;
++
++public class GuiStupid extends GuiControlPanel {
++	private static final String[] messages = {
++			"Hi! I was a stupid dev!",
++			"You may have noticed that the game is very adventure-esque.",
++			"That's a huge bug! Sorry.",
++			"I rushed the release of this mod and I didn't test it properly.",
++			"It's fixed now, but the damage has already been done.",
++			"Time to reset your settings!"
++	};
++
++	private int updateCounter = -10;
++	private int state = 0;
++	private int msgNum = 0;
++	private boolean justClicked;
++
++	public GuiStupid() {
++		Personalization.betaness = 0.0F;
++		Personalization.weirdness = 0.0F;
++		Personalization.chaos = 0.0F;
++		Personalization.days = 0;
++		Personalization.vanillaMode = Personalization.rand.nextInt(3) == 0;
++		Personalization.version = null;
++		Personalization.noiseSeed = 0;
++		while (Personalization.noiseSeed == 0) {
++			Personalization.noiseSeed = Personalization.rand.nextLong();
++		}
++
++		Personalization.options.clear();
++		Personalization.optionMap.clear();
++		Personalization.personalize();
++	}
++
++	public void updateScreen() {
++		super.updateScreen();
++		this.updateCounter++;
++
++		if (this.state == 0 && this.updateCounter > 20) {
++			this.state = 1;
++			this.updateCounter = 0;
++			this.game.sndManager.playSoundFX("mob.wolf.bark", 1.0F, 1.2F + Personalization.rand.nextFloat() * 0.2F);
++		} else if (this.state == 1 && (this.updateCounter > 100 || this.justClicked)) {
++			if (++this.msgNum >= messages.length) {
++				this.state = 2;
++			} else {
++				this.game.sndManager.playSoundFX("mob.wolf.bark", 1.0F, 1.2F + Personalization.rand.nextFloat() * 0.2F);
++			}
++			this.updateCounter = 0;
++		}
++
++		this.justClicked = false;
++		this.game.sndManager.playSecretMusic();
++	}
++
++	public void drawScreen(int var1, int var2, float var3) {
++		this.drawControlPanelBackground();
++
++		int staggoTexture = this.game.renderEngine.getTexture("/gui/staggo.png");
++		this.game.renderEngine.bindTexture(staggoTexture);
++
++		int slide = 200;
++		float squash = 0.0F;
++		float tween = (this.updateCounter + var3) / 10.0F;
++		tween = MathHelper.clamp(tween, 0.0F, 1.0F);
++		tween = this.state == 2 ? tween * tween : squareOut(tween);
++
++		if (this.state == 0) {
++			slide = (int)(tween * 200.0F);
++		} else if (this.state == 1) {
++			squash = (1.0F - tween) * 0.05F;
++		} else if (this.state == 2) {
++			slide = (int)(200.0F - tween * 200.0F);
++			this.game.guiStatic.forcedStrength = (this.updateCounter + var3) / 20.0F;
++		}
++
++		GL11.glPushMatrix();
++		GL11.glTranslatef(256.0F, 256.0F, 0.0F);
++		GL11.glScalef(1.0F + squash, 1.0F - squash, 1.0F);
++		GL11.glTranslatef(-256.0F, -256.0F, 0.0F);
++		GL11.glTranslatef(this.width - slide, this.height - 240, 0.0F);
++		this.drawTexturedModalRect(0, 0, 0, 0, 256, 256);
++		GL11.glPopMatrix();
++
++		if (this.state == 1) {
++			GL11.glPushMatrix();
++			GL11.glTranslatef(this.width / 10.0F, this.height / 2.0F - 24.0F, 0);
++			GL11.glScalef(2.0F, 2.0F, 0.0F);
++			GL11.glEnable(GL11.GL_BLEND);
++			this.fontRenderer.lineHeight = 10;
++			this.fontRenderer.drawSplitString(messages[msgNum], 1, 1, this.width / 4, 0xFFFFFF, true);
++			this.fontRenderer.drawSplitString(messages[msgNum], 0, 0, this.width / 4, 0xFFFFFF, false);
++			this.fontRenderer.lineHeight = 8;
++			GL11.glDisable(GL11.GL_BLEND);
++			GL11.glPopMatrix();
++		}
++	}
++
++	protected void mouseClicked(int var1, int var2, int var3) {
++		this.justClicked = true;
++	}
++
++	private static float squareOut(float f) {
++		f = 1.0F - f;
++		f *= f;
++		f = 1.0F - f;
++		return f;
++	}
++}
 --- net/minecraft/src/BiomeGenHills.java
 +++ net/minecraft/src/BiomeGenHills.java
-@@ -1,7 +1,59 @@
+@@ -1,7 +1,60 @@
  package net.minecraft.src;
  
 +import java.util.Random;
@@ -12895,6 +13074,7 @@
 +	public boolean stony;
 +	public boolean snowy;
 +	public boolean spruce;
++	public boolean trees;
 +
  	protected BiomeGenHills(int var1) {
  		super(var1);
@@ -12905,7 +13085,7 @@
 +	}
 +
 +	public void func_35477_a(World var1, Random var2, int var3, int var4) {
-+		this.decorator.trees = doHills(var3 >> 2, var4 >> 2) ? 3 : 0;
++		this.decorator.trees = this.trees && doHills(var3 >> 2, var4 >> 2) ? 3 : 0;
 +		super.func_35477_a(var1, var2, var3, var4);
 +	}
 +
@@ -13712,14 +13892,14 @@
  				float var12 = var6 + var5;
  				float var13 = var7 + var10;
  				float var14 = var4 + var11;
-@@ -613,6 +675,7 @@
- 				if(!this.mc.gameSettings.hideGUI || this.mc.currentScreen != null) {
- 					this.mc.ingameGUI.renderGameOverlay(var1, this.mc.currentScreen != null, var16, var17);
+@@ -646,6 +708,7 @@
  				}
-+				this.mc.guiNotch.drawScreen(0, 0, var1);
- 			} else {
- 				GL11.glViewport(0, 0, this.mc.displayWidth, this.mc.displayHeight);
- 				GL11.glMatrixMode(GL11.GL_PROJECTION);
+ 			}
+ 
++			this.mc.guiStatic.drawScreen(0, 0, var1);
+ 		}
+ 	}
+ 
 @@ -830,7 +893,8 @@
  				int var17 = var6 + this.random.nextInt(var7) - this.random.nextInt(var7);
  				int var18 = var3.func_35461_e(var16, var17);
@@ -13765,22 +13945,27 @@
  			if(var13 < 0.0D) {
  				var13 = 0.0D;
  			}
-@@ -1173,7 +1236,7 @@
+@@ -1172,8 +1235,12 @@
+ 				}
  			} else {
  				var4 = this.farPlaneDistance;
++				if (this.mc.thePlayer.dimension == 2 && this.mc.thePlayer.posY < ChunkProviderOffices.height * 7) {
++					var4 = Math.min(var4, 100);
++				}
++
  				double var10 = (double)((var3.func_35115_a(var2) & 15728640) >> 20) / 16.0D + (var3.lastTickPosY + (var3.posY - var3.lastTickPosY) * (double)var2 + 4.0D) / 32.0D;
 -				if(var10 < 1.0D) {
 +				if(!(this.mc.theWorld.worldProvider instanceof WorldProviderOffices) && var10 < 1.0D) {
  					if(var10 < 0.0D) {
  						var10 = 0.0D;
  					}
-@@ -1190,7 +1253,10 @@
+@@ -1190,7 +1257,10 @@
  				}
  
  				GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_LINEAR);
 -				GL11.glFogf(GL11.GL_FOG_START, var4 * 0.25F);
 +				GL11.glFogf(GL11.GL_FOG_START, var4 * (
-+						Personalization.thickerFog && !Personalization.pe7env ? 0.0F
++						Personalization.thickerFog || this.mc.thePlayer.dimension == 2 ? 0.0F
 +						: Personalization.thickFog && !Personalization.pe8env ? 0.25F
 +						: 0.75F));
  				GL11.glFogf(GL11.GL_FOG_END, var4);
@@ -15125,20 +15310,14 @@
  		}
  
  		if(this.recordPlayingUpFor > 0) {
-@@ -460,6 +544,7 @@
- 	}
- 
- 	private void renderPortalOverlay(float var1, int var2, int var3) {
-+		boolean sky = this.mc.thePlayer.inSkyPortal;
- 		if(var1 < 1.0F) {
- 			var1 *= var1;
- 			var1 *= var1;
-@@ -470,7 +555,15 @@
+@@ -470,7 +554,17 @@
  		GL11.glDisable(GL11.GL_DEPTH_TEST);
  		GL11.glDepthMask(false);
  		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 -		GL11.glColor4f(1.0F, 1.0F, 1.0F, var1);
-+		if (sky) {
++		if (this.mc.thePlayer.inChargedPortal) {
++			GL11.glColor4f(1.0F, 1.0F, 0.0F, var1);
++		} else if (this.mc.thePlayer.inSkyPortal) {
 +			if (Personalization.endSky) {
 +				GL11.glColor4f(0.0F, 0.0F, 0.0F, var1);
 +			} else {
@@ -15150,7 +15329,7 @@
  		GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
  		float var4 = (float)(Block.portal.blockIndexInTexture % 16) / 16.0F;
  		float var5 = (float)(Block.portal.blockIndexInTexture / 16) / 16.0F;
-@@ -555,5 +648,28 @@
+@@ -555,5 +649,28 @@
  		StringTranslate var2 = StringTranslate.getInstance();
  		String var3 = var2.translateKey(var1);
  		this.addChatMessage(var3);
@@ -16043,7 +16222,7 @@
 +}
 --- /dev/null
 +++ net/minecraft/src/ChunkProviderOffices.java
-@@ -1,0 +1,449 @@
+@@ -1,0 +1,480 @@
 +package net.minecraft.src;
 +
 +import com.github.sjcasey21.wavefunctioncollapse.OverlappingModel;
@@ -16095,7 +16274,6 @@
 +		WALL(0x000000) {
 +			public void placeColumn(ChunkProviderOffices chunkProvider, byte[] blocks, byte[] metadata, int i, int x, int y, int z) {
 +				for (int yy = 0; yy < 7; yy++) {
-+					metadata[i] = 0;
 +					blocks[i++] = yy > 1 ? chunkProvider.wallType : chunkProvider.wallBottomType;
 +				}
 +			}
@@ -16104,7 +16282,6 @@
 +			public void placeColumn(ChunkProviderOffices chunkProvider, byte[] blocks, byte[] metadata, int i, int x, int y, int z) {
 +				int j = i;
 +				for (int yy = 0; yy < 7; yy++) {
-+					metadata[j] = 0;
 +					blocks[j++] = yy > 0 && yy <= 5 ? 0
 +							: yy > 5 ? chunkProvider.ceilingType
 +							: chunkProvider.floorType;
@@ -16134,7 +16311,6 @@
 +				i++;
 +				for (int yy = 1; yy < 4; yy++) {
 +					blocks[i] = 0;
-+					metadata[i] = 0;
 +					if (yy == 1) {
 +						if (x3 == 2 && z3 == 1) {
 +							blocks[i] = (byte)Block.stairsLightPlanks.blockID;
@@ -16163,7 +16339,6 @@
 +
 +				i++;
 +				for (int yy = 0; yy < 3; yy++) {
-+					metadata[i] = 0;
 +					if (yy == 0) {
 +						blocks[i] = (byte)Block.bookShelf.blockID;
 +					} else {
@@ -16181,7 +16356,6 @@
 +			public void placeColumn(ChunkProviderOffices chunkProvider, byte[] blocks, byte[] metadata, int i, int x, int y, int z) {
 +				int j = i;
 +				for (int yy = 0; yy < 7; yy++) {
-+					metadata[j] = 0;
 +					blocks[j++] = yy > 0 && yy <= 3 ? 0
 +							: yy > 3 ? chunkProvider.ceilingType
 +							: chunkProvider.floorType;
@@ -16200,7 +16374,6 @@
 +
 +				for (int yy = 0; yy < 7; yy++) {
 +					blocks[i] = 0;
-+					metadata[i] = 0;
 +					if (x3 == 1 && z3 == 1) {
 +						blocks[i] = (byte)Block.wood.blockID;
 +					} else if (x3 == 1 || z3 == 1) {
@@ -16231,6 +16404,27 @@
 +					}
 +					i++;
 +				}
++			}
++		},
++		PORTAL(0xFF7F00) {
++			public void placeColumn(ChunkProviderOffices chunkProvider, byte[] blocks, byte[] metadata, int i, int x, int y, int z) {
++				FLOOR.placeColumn(chunkProvider, blocks, metadata, i, x, y, z);
++
++				int x3 = Math.floorMod(x, 3);
++				int z3 = Math.floorMod(z, 3);
++
++				i++;
++				metadata[i] = 0;
++				if (x3 == 1 && z3 == 1) {
++					blocks[i] = (byte)Block.portal.blockID;
++					metadata[i] = 2;
++				} else {
++					blocks[i] = (byte)Block.chargedPortalFrame.blockID;
++					metadata[i] = 1;
++				}
++
++				blocks[++i] = 0;
++				blocks[++i] = 0;
 +			}
 +		},
 +		LAMP {
@@ -16278,7 +16472,6 @@
 +			public void placeColumn(ChunkProviderOffices chunkProvider, byte[] blocks, byte[] metadata, int i, int x, int y, int z) {
 +				int j = i;
 +				for (int yy = 0; yy < 7; yy++) {
-+					metadata[j] = 0;
 +					blocks[j++] = yy > 5 ? chunkProvider.ceilingType : 0;
 +				}
 +
@@ -16450,6 +16643,23 @@
 +				for (int y = 41; y <= 43; y++) {
 +					if ((img.getRGB(x, y) & 0xFFFFFF) == 0) {
 +						img.setRGB(x, y, 0xFFFFFF);
++					}
++				}
++			}
++		}
++
++		for (int j = 0; j < 5; j++) {
++			int x = rand.nextInt(85);
++			int y = rand.nextInt(85);
++			img.setRGB(x, y, 0xFF7F00);
++		}
++
++		for (int x = 0; x < 85; x++) {
++			for (int y = 0; y < 85; y++) {
++				RoomColumn room = RoomColumn.fromColor(img.getRGB(x, y));
++				if (room == RoomColumn.FLOOR) {
++					if (rand.nextInt(30) == 0) {
++						img.setRGB(x, y, RoomColumn.BOOKSHELVES.color);
 +					}
 +				}
 +			}
@@ -17536,7 +17746,7 @@
  	}
  
  	public void removeEntity(Entity var1) {
-@@ -542,23 +576,24 @@
+@@ -542,15 +576,15 @@
  			var2 = 0;
  		}
  
@@ -17556,8 +17766,7 @@
  	}
  
  	public TileEntity getChunkBlockTileEntity(int var1, int var2, int var3) {
-+
- 		ChunkPosition var4 = new ChunkPosition(var1, var2, var3);
+@@ -558,7 +592,7 @@
  		TileEntity var5 = (TileEntity)this.chunkTileEntityMap.get(var4);
  		if(var5 == null) {
  			int var6 = this.getBlockID(var1, var2, var3);
@@ -17566,7 +17775,7 @@
  				return null;
  			}
  
-@@ -598,8 +633,6 @@
+@@ -598,8 +632,6 @@
  		if(this.getBlockID(var1, var2, var3) != 0 && Block.blocksList[this.getBlockID(var1, var2, var3)] instanceof BlockContainer) {
  			var4.validate();
  			this.chunkTileEntityMap.put(var5, var4);
@@ -17575,7 +17784,7 @@
  		}
  	}
  
-@@ -618,8 +651,8 @@
+@@ -618,8 +650,8 @@
  		this.isChunkLoaded = true;
  		this.worldObj.addTileEntity(this.chunkTileEntityMap.values());
  
@@ -17586,7 +17795,7 @@
  		}
  
  	}
-@@ -633,8 +666,8 @@
+@@ -633,8 +665,8 @@
  			this.worldObj.func_35455_a(var2);
  		}
  
@@ -17597,7 +17806,7 @@
  		}
  
  	}
-@@ -650,17 +683,26 @@
+@@ -650,17 +682,26 @@
  			var4 = 0;
  		}
  
@@ -17627,7 +17836,7 @@
  				}
  			}
  		}
-@@ -672,14 +714,18 @@
+@@ -672,14 +713,18 @@
  		int var5 = MathHelper.floor_double((var2.maxY + 2.0D) / 16.0D);
  		if(var4 < 0) {
  			var4 = 0;
@@ -17649,7 +17858,7 @@
  
  			for(int var8 = 0; var8 < var7.size(); ++var8) {
  				Entity var9 = (Entity)var7.get(var8);
-@@ -694,98 +740,39 @@
+@@ -694,98 +739,39 @@
  	public boolean needsSaving(boolean var1) {
  		if(this.neverSave) {
  			return false;
@@ -17771,7 +17980,7 @@
  		if(!this.isTerrainPopulated && var1.chunkExists(var3 + 1, var4 + 1) && var1.chunkExists(var3, var4 + 1) && var1.chunkExists(var3 + 1, var4)) {
  			var1.populate(var2, var3, var4);
  		}
-@@ -804,12 +791,11 @@
+@@ -804,12 +790,11 @@
  
  	}
  
@@ -17787,7 +17996,7 @@
  			var4 = -1;
  
  			while(true) {
-@@ -823,7 +809,7 @@
+@@ -823,7 +808,7 @@
  					}
  				}
  
@@ -17796,7 +18005,7 @@
  				break;
  			}
  		}
-@@ -831,7 +817,165 @@
+@@ -831,7 +816,165 @@
  		return var4;
  	}
  
@@ -18291,7 +18500,7 @@
  	private int tempDisplayHeight;
  	public GuiAchievement guiAchievement = new GuiAchievement(this);
  	public GuiIngame ingameGUI;
-+	public GuiStatic guiNotch;
++	public GuiStatic guiStatic;
  	public boolean skipRenderWorld = false;
  	public ModelBiped playerModelBiped = new ModelBiped(0.0F);
  	public MovingObjectPosition objectMouseOver = null;
@@ -18324,12 +18533,12 @@
  
  		this.checkGLError("Post startup");
  		this.ingameGUI = new GuiIngame(this);
-+		this.guiNotch = new GuiStatic(this);
++		this.guiStatic = new GuiStatic(this);
  		if(this.serverName != null) {
  			this.displayGuiScreen(new GuiConnecting(this, this.serverName, this.serverPort));
  		} else {
 -			this.displayGuiScreen(new GuiMainMenu());
-+			this.displayGuiScreen(Personalization.DEMO_MODE ? new GuiDemoPreset() : new GuiMainMenu());
++			this.displayGuiScreen(Personalization.getStartScreen());
  		}
  
  		this.loadingScreen = new LoadingScreenRenderer(this);
@@ -18385,7 +18594,7 @@
  				this.currentScreen.updateScreen();
  			}
  		}
-+		this.guiNotch.updateScreen();
++		this.guiStatic.updateScreen();
  
  		if(this.currentScreen == null || this.currentScreen.allowUserInput) {
  			while(Mouse.next()) {
@@ -18485,7 +18694,7 @@
  			}
  		}
  
-@@ -1229,6 +1231,228 @@
+@@ -1229,6 +1231,231 @@
  
  	}
  
@@ -18550,7 +18759,10 @@
 +
 +		System.out.println("Toggling dimension!!");
 +		if(this.thePlayer.dimension == 2) {
-+			this.thePlayer.dimension = 0;
++			World world = new World(this.theWorld, WorldProvider.getProviderForDimension(0));
++			this.changeWorld(world, "Leaving Mojang Offices", this.thePlayer);
++			this.respawn(this.theWorld.multiplayerWorld, 0, true);
++			return;
 +		} else {
 +			this.thePlayer.dimension = 2;
 +		}
@@ -18569,7 +18781,7 @@
 +			var7 = new World(this.theWorld, WorldProvider.getProviderForDimension(2));
 +			this.changeWorld(var7, "Entering Mojang Offices", this.thePlayer);
 +		} else {
-+			this.thePlayer.setLocationAndAngles(var1, this.thePlayer.posY, var3, this.thePlayer.rotationYaw, this.thePlayer.rotationPitch);
++			this.thePlayer.setLocationAndAngles(var1, 64, var3, this.thePlayer.rotationYaw, this.thePlayer.rotationPitch);
 +			if(this.thePlayer.isEntityAlive()) {
 +				this.theWorld.updateEntityWithOptionalForce(this.thePlayer, false);
 +			}
@@ -18714,7 +18926,7 @@
  	public void changeWorld1(World var1) {
  		this.changeWorld2(var1, "");
  	}
-@@ -1306,6 +1530,8 @@
+@@ -1306,6 +1533,8 @@
  			}
  
  			this.renderViewEntity = this.thePlayer;
@@ -18723,7 +18935,7 @@
  		} else {
  			this.thePlayer = null;
  		}
-@@ -1315,7 +1541,7 @@
+@@ -1315,7 +1544,7 @@
  	}
  
  	private void convertMapFormat(String var1, String var2) {
@@ -18732,7 +18944,7 @@
  		this.loadingScreen.displayLoadingString("This may take a while :)");
  		this.saveLoader.convertMapFormat(var1, this.loadingScreen);
  		this.startWorld(var1, var2, new WorldSettings(0L, 0, true));
-@@ -1411,8 +1637,22 @@
+@@ -1411,8 +1640,22 @@
  	}
  
  	public void respawn(boolean var1, int var2) {
@@ -18757,7 +18969,7 @@
  		}
  
  		ChunkCoordinates var3 = null;
-@@ -1447,8 +1687,13 @@
+@@ -1447,8 +1690,13 @@
  			this.theWorld.setEntityDead(this.thePlayer);
  		}
  
@@ -18771,7 +18983,7 @@
  		this.thePlayer.dimension = var2;
  		this.renderViewEntity = this.thePlayer;
  		this.thePlayer.preparePlayerToSpawn();
-@@ -1532,7 +1777,7 @@
+@@ -1532,7 +1780,7 @@
  	}
  
  	public static boolean isAmbientOcclusionEnabled() {
@@ -19992,7 +20204,7 @@
  }
 --- /dev/null
 +++ net/minecraft/src/GuiModifyValues.java
-@@ -1,0 +1,79 @@
+@@ -1,0 +1,95 @@
 +package net.minecraft.src;
 +
 +public class GuiModifyValues extends GuiControlPanel {
@@ -20015,34 +20227,45 @@
 +	public void initGui() {
 +		this.controlList.add(new GuiButton(0, this.width / 2 - 50, this.height / 2 + 80, 100, 20, "OK"));
 +
-+		this.textboxBetaness = new GuiTextField(this, this.fontRenderer, this.width / 2 - 50, this.height / 2 - 50,
++		this.textboxBetaness = new GuiTextField(this, this.fontRenderer, this.width / 2 - 105, this.height / 2 - 30,
 +				100, 20, String.valueOf(Personalization.betaness));
-+		this.textboxWeirdness = new GuiTextField(this, this.fontRenderer, this.width / 2 - 50, this.height / 2 - 10,
++		this.textboxWeirdness = new GuiTextField(this, this.fontRenderer, this.width / 2 - 105, this.height / 2 + 10,
 +				100, 20, String.valueOf(Personalization.weirdness));
-+		this.textboxChaos = new GuiTextField(this, this.fontRenderer, this.width / 2 - 50, this.height / 2 + 30,
++		this.textboxChaos = new GuiTextField(this, this.fontRenderer, this.width / 2 + 5, this.height / 2 - 30,
 +				100, 20, String.valueOf(Personalization.chaos));
++
++		this.controlList.add(new GuiButton(1, this.width / 2 + 5, this.height / 2 + 10, 100, 20, textBool(Personalization.chaosEffects)));
 +	}
 +
 +	protected void actionPerformed(GuiButton var1) {
-+		try {
-+			Personalization.betaness = Float.parseFloat(this.textboxBetaness.getText());
-+		} catch (NumberFormatException e) {
-+		}
++		switch (var1.id) {
++			case 0:
++				try {
++					Personalization.betaness = Float.parseFloat(this.textboxBetaness.getText());
++				} catch (NumberFormatException ignored) {
++				}
 +
-+		try {
-+			Personalization.weirdness = Float.parseFloat(this.textboxWeirdness.getText());
-+		} catch (NumberFormatException e) {
-+		}
++				try {
++					Personalization.weirdness = Float.parseFloat(this.textboxWeirdness.getText());
++				} catch (NumberFormatException ignored) {
++				}
 +
-+		try {
-+			Personalization.chaos = Float.parseFloat(this.textboxChaos.getText());
-+		} catch (NumberFormatException e) {
-+		}
++				try {
++					Personalization.chaos = Float.parseFloat(this.textboxChaos.getText());
++				} catch (NumberFormatException ignored) {
++				}
 +
-+		Personalization.options.clear();
-+		Personalization.optionMap.clear();
-+		Personalization.personalize();
-+		this.game.displayGuiScreen(this.parentScreen);
++				Personalization.options.clear();
++				Personalization.optionMap.clear();
++				Personalization.personalize();
++				this.game.displayGuiScreen(this.parentScreen);
++				break;
++
++			case 1:
++				Personalization.chaosEffects = !Personalization.chaosEffects;
++				var1.displayString = textBool(Personalization.chaosEffects);
++				break;
++		}
 +	}
 +
 +	protected void keyTyped(char var1, int var2) {
@@ -20061,15 +20284,20 @@
 +	public void drawScreen(int var1, int var2, float var3) {
 +		this.drawControlPanelBackground();
 +
-+		this.drawString(this.fontRenderer, "Betaness", this.width / 2 - 45, this.height / 2 - 65, 0x55FF55);
-+		this.drawString(this.fontRenderer, "Weirdness", this.width / 2 - 45, this.height / 2 - 25, 0x5555FF);
-+		this.drawString(this.fontRenderer, "Chaos", this.width / 2 - 45, this.height / 2 + 15, 0xFF5555);
++		this.drawString(this.fontRenderer, "Betaness", this.width / 2 - 100, this.height / 2 - 44, 0x55FF55);
++		this.drawString(this.fontRenderer, "Weirdness", this.width / 2 - 100, this.height / 2 - 4, 0x5555FF);
++		this.drawString(this.fontRenderer, "Chaos", this.width / 2 + 10, this.height / 2 - 44, 0xFF5555);
++		this.drawString(this.fontRenderer, "Adjust Chaos", this.width / 2 + 10, this.height / 2 - 4, 0xAAAAAA);
 +
 +		this.textboxBetaness.drawTextBox();
 +		this.textboxWeirdness.drawTextBox();
 +		this.textboxChaos.drawTextBox();
 +
 +		super.drawScreen(var1, var2, var3);
++	}
++
++	private static String textBool(boolean value) {
++		return value ? "ON" : "OFF";
 +	}
 +}
 --- /dev/null
@@ -23220,6 +23448,16 @@
  			if(Item.itemsList[var8] != null) {
  				this.field_35375_a.add(new ItemStack(Item.itemsList[var8]));
  			}
+@@ -42,6 +42,9 @@
+ 		for(var8 = 1; var8 < 16; ++var8) {
+ 			this.field_35375_a.add(new ItemStack(Item.dyePowder.shiftedIndex, 1, var8));
+ 		}
++
++		this.field_35375_a.add(new ItemStack(Block.chargedPortalFrame));
++		this.field_35375_a.add(new ItemStack(Item.eyeOfEnder));
+ 
+ 		InventoryPlayer var11 = var1.inventory;
+ 
 --- net/minecraft/src/GuiControls.java
 +++ net/minecraft/src/GuiControls.java
 @@ -33,7 +33,7 @@
@@ -23395,7 +23633,7 @@
  
 --- /dev/null
 +++ net/minecraft/src/GuiRemix.java
-@@ -1,0 +1,122 @@
+@@ -1,0 +1,131 @@
 +package net.minecraft.src;
 +
 +import org.lwjgl.opengl.GL11;
@@ -23454,6 +23692,10 @@
 +					this.game.displayGuiScreen(new GuiWinGame());
 +					break;
 +
++				case 4:
++					this.game.displayGuiScreen(new GuiUpdate().dontRepersonalize());
++					break;
++
 +				default:
 +					this.game.displayGuiScreen(new GuiUpdate());
 +					break;
@@ -23475,6 +23717,11 @@
 +
 +	public GuiRemix beatTheGame() {
 +		this.outcome = 3;
++		return this;
++	}
++
++	public GuiRemix resetValues() {
++		this.outcome = 4;
 +		return this;
 +	}
 +
