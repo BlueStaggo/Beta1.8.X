@@ -4151,7 +4151,16 @@
  		}
  
  		GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-@@ -99,15 +104,15 @@
+@@ -82,8 +87,6 @@
+ 
+ 		GL11.glPopMatrix();
+ 		super.drawScreen(var1, var2, var3);
+-		GL11.glEnable(GL11.GL_LIGHTING);
+-		GL11.glEnable(GL11.GL_DEPTH_TEST);
+ 	}
+ 
+ 	protected void drawGuiContainerForegroundLayer() {
+@@ -99,15 +102,15 @@
  			int var5 = var1.getBackgroundIconIndex();
  			if(var5 >= 0) {
  				GL11.glDisable(GL11.GL_LIGHTING);
@@ -4170,7 +4179,7 @@
  	}
  
  	private Slot getSlotAtPosition(int var1, int var2) {
-@@ -158,7 +163,7 @@
+@@ -158,7 +161,7 @@
  			var2 = var1.slotNumber;
  		}
  
@@ -4179,7 +4188,7 @@
  	}
  
  	protected void mouseMovedOrUp(int var1, int var2, int var3) {
-@@ -168,16 +173,16 @@
+@@ -168,16 +171,16 @@
  	}
  
  	protected void keyTyped(char var1, int var2) {
@@ -4201,7 +4210,7 @@
  		}
  	}
  
-@@ -187,8 +192,8 @@
+@@ -187,8 +190,8 @@
  
  	public void updateScreen() {
  		super.updateScreen();
