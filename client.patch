@@ -268,7 +268,7 @@
 +				return false;
 +			}
 +
-+			var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
++			this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
 +			var9 = var4 + var7;
 +			if(var6 == 1) {
 +				var9 = var4 + var7 - 3;
@@ -347,7 +347,7 @@
 +						}
 +
 +						if((var14 != 0 || var4 >= var4 + var7 - 1) && !Block.opaqueCubeLookup[var1.getBlockId(var12, var15, var13)]) {
-+							var1.setNewBlockAndMetadata(var12, var15, var13, Block.field_35286_bo.blockID + var6, var14);
++							this.setBlockAndMetadata(var1, var12, var15, var13, Block.field_35286_bo.blockID + var6, var14);
 +						}
 +					}
 +				}
@@ -356,7 +356,7 @@
 +			for(var15 = 0; var15 < var7; ++var15) {
 +				var11 = var1.getBlockId(var3, var4 + var15, var5);
 +				if(!Block.opaqueCubeLookup[var11]) {
-+					var1.setNewBlockAndMetadata(var3, var4 + var15, var5, Block.field_35286_bo.blockID + var6, 10);
++					this.setBlockAndMetadata(var1, var3, var4 + var15, var5, Block.field_35286_bo.blockID + var6, 10);
 +				}
 +			}
 +
@@ -672,7 +672,7 @@
 +	}
 +
 +	public void harvestBlock(World var1, EntityPlayer var2, int var3, int var4, int var5, int var6) {
-+		Personalization.betaness -= 10.0F;
++		Personalization.betaBias -= 10.0F;
 +		super.harvestBlock(var1, var2, var3, var4, var5, var6);
  	}
  }
@@ -703,7 +703,7 @@
  					int var10 = var5 + var2.nextInt(8) - var2.nextInt(8);
  					if(var1.isAirBlock(var8, var9, var10) && ((BlockFlower)Block.blocksList[this.field_28060_a]).canBlockStay(var1, var8, var9, var10)) {
 -						var1.setBlockAndMetadata(var8, var9, var10, this.field_28060_a, this.field_28059_b);
-+						var1.setNewBlockAndMetadata(var8, var9, var10, this.field_28060_a, this.field_28059_b);
++						this.setBlockAndMetadata(var1, var8, var9, var10, this.field_28060_a, this.field_28059_b);
  					}
  				}
  
@@ -1604,10 +1604,10 @@
 +			} else {
 +				var8 = var1.getBlockId(var3, var4 - 1, var5);
 +				if((var8 == Block.grass.blockID || var8 == Block.dirt.blockID) && var4 < 256 - var6 - 1) {
-+					var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
-+					var1.setNewBlock(var3 + 1, var4 - 1, var5, Block.dirt.blockID);
-+					var1.setNewBlock(var3, var4 - 1, var5 + 1, Block.dirt.blockID);
-+					var1.setNewBlock(var3 + 1, var4 - 1, var5 + 1, Block.dirt.blockID);
++					this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
++					this.setBlock(var1, var3 + 1, var4 - 1, var5, Block.dirt.blockID);
++					this.setBlock(var1, var3, var4 - 1, var5 + 1, Block.dirt.blockID);
++					this.setBlock(var1, var3 + 1, var4 - 1, var5 + 1, Block.dirt.blockID);
 +					this.func_48192_a(var1, var3, var5, var4 + var6, 2, var2);
 +
 +					for(int var14 = var4 + var6 - 2 - var2.nextInt(4); var14 > var4 + var6 / 2; var14 -= 2 + var2.nextInt(4)) {
@@ -1619,21 +1619,21 @@
 +						for(int var13 = 0; var13 < 5; ++var13) {
 +							var11 = var3 + (int)(1.5F + MathHelper.cos(var15) * (float)var13);
 +							var12 = var5 + (int)(1.5F + MathHelper.sin(var15) * (float)var13);
-+							var1.setNewBlockAndMetadata(var11, var14 - 3 + var13 / 2, var12, Block.wood.blockID, this.woodMetadata);
++							this.setBlockAndMetadata(var1, var11, var14 - 3 + var13 / 2, var12, Block.wood.blockID, this.woodMetadata);
 +						}
 +					}
 +
 +					for(var10 = 0; var10 < var6; ++var10) {
 +						var11 = var1.getBlockId(var3, var4 + var10, var5);
 +						if(var11 == 0 || var11 == Block.leaves.blockID) {
-+							var1.setNewBlockAndMetadata(var3, var4 + var10, var5, Block.wood.blockID, this.woodMetadata);
++							this.setBlockAndMetadata(var1, var3, var4 + var10, var5, Block.wood.blockID, this.woodMetadata);
 +							if(var10 > 0) {
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 - 1, var4 + var10, var5)) {
-+									var1.setNewBlockAndMetadata(var3 - 1, var4 + var10, var5, Block.field_35278_bv.blockID, 8);
++									this.setBlockAndMetadata(var1, var3 - 1, var4 + var10, var5, Block.field_35278_bv.blockID, 8);
 +								}
 +
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3, var4 + var10, var5 - 1)) {
-+									var1.setNewBlockAndMetadata(var3, var4 + var10, var5 - 1, Block.field_35278_bv.blockID, 1);
++									this.setBlockAndMetadata(var1, var3, var4 + var10, var5 - 1, Block.field_35278_bv.blockID, 1);
 +								}
 +							}
 +						}
@@ -1641,42 +1641,42 @@
 +						if(var10 < var6 - 1) {
 +							var11 = var1.getBlockId(var3 + 1, var4 + var10, var5);
 +							if(var11 == 0 || var11 == Block.leaves.blockID) {
-+								var1.setNewBlockAndMetadata(var3 + 1, var4 + var10, var5, Block.wood.blockID, this.woodMetadata);
++								this.setBlockAndMetadata(var1, var3 + 1, var4 + var10, var5, Block.wood.blockID, this.woodMetadata);
 +								if(var10 > 0) {
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 + 2, var4 + var10, var5)) {
-+										var1.setNewBlockAndMetadata(var3 + 2, var4 + var10, var5, Block.field_35278_bv.blockID, 2);
++										this.setBlockAndMetadata(var1, var3 + 2, var4 + var10, var5, Block.field_35278_bv.blockID, 2);
 +									}
 +
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 + 1, var4 + var10, var5 - 1)) {
-+										var1.setNewBlockAndMetadata(var3 + 1, var4 + var10, var5 - 1, Block.field_35278_bv.blockID, 1);
++										this.setBlockAndMetadata(var1, var3 + 1, var4 + var10, var5 - 1, Block.field_35278_bv.blockID, 1);
 +									}
 +								}
 +							}
 +
 +							var11 = var1.getBlockId(var3 + 1, var4 + var10, var5 + 1);
 +							if(var11 == 0 || var11 == Block.leaves.blockID) {
-+								var1.setNewBlockAndMetadata(var3 + 1, var4 + var10, var5 + 1, Block.wood.blockID, this.woodMetadata);
++								this.setBlockAndMetadata(var1, var3 + 1, var4 + var10, var5 + 1, Block.wood.blockID, this.woodMetadata);
 +								if(var10 > 0) {
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 + 2, var4 + var10, var5 + 1)) {
-+										var1.setNewBlockAndMetadata(var3 + 2, var4 + var10, var5 + 1, Block.field_35278_bv.blockID, 2);
++										this.setBlockAndMetadata(var1, var3 + 2, var4 + var10, var5 + 1, Block.field_35278_bv.blockID, 2);
 +									}
 +
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 + 1, var4 + var10, var5 + 2)) {
-+										var1.setNewBlockAndMetadata(var3 + 1, var4 + var10, var5 + 2, Block.field_35278_bv.blockID, 4);
++										this.setBlockAndMetadata(var1, var3 + 1, var4 + var10, var5 + 2, Block.field_35278_bv.blockID, 4);
 +									}
 +								}
 +							}
 +
 +							var11 = var1.getBlockId(var3, var4 + var10, var5 + 1);
 +							if(var11 == 0 || var11 == Block.leaves.blockID) {
-+								var1.setNewBlockAndMetadata(var3, var4 + var10, var5 + 1, Block.wood.blockID, this.woodMetadata);
++								this.setBlockAndMetadata(var1, var3, var4 + var10, var5 + 1, Block.wood.blockID, this.woodMetadata);
 +								if(var10 > 0) {
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 - 1, var4 + var10, var5 + 1)) {
-+										var1.setNewBlockAndMetadata(var3 - 1, var4 + var10, var5 + 1, Block.field_35278_bv.blockID, 8);
++										this.setBlockAndMetadata(var1, var3 - 1, var4 + var10, var5 + 1, Block.field_35278_bv.blockID, 8);
 +									}
 +
 +									if(var2.nextInt(3) > 0 && var1.isAirBlock(var3, var4 + var10, var5 + 2)) {
-+										var1.setNewBlockAndMetadata(var3, var4 + var10, var5 + 2, Block.field_35278_bv.blockID, 4);
++										this.setBlockAndMetadata(var1, var3, var4 + var10, var5 + 2, Block.field_35278_bv.blockID, 4);
 +									}
 +								}
 +							}
@@ -1706,7 +1706,7 @@
 +				for(int var13 = var3 - var10; var13 <= var3 + var10 + 1; ++var13) {
 +					int var14 = var13 - var3;
 +					if((var12 >= 0 || var14 >= 0 || var12 * var12 + var14 * var14 <= var10 * var10) && (var12 <= 0 && var14 <= 0 || var12 * var12 + var14 * var14 <= (var10 + 1) * (var10 + 1)) && (var6.nextInt(4) != 0 || var12 * var12 + var14 * var14 <= (var10 - 1) * (var10 - 1)) && !Block.opaqueCubeLookup[var1.getBlockId(var11, var8, var13)]) {
-+						var1.setNewBlockAndMetadata(var11, var8, var13, Block.leaves.blockID, this.leavesMetadata);
++						this.setBlockAndMetadata(var1, var11, var8, var13, Block.leaves.blockID, this.leavesMetadata);
 +					}
 +				}
 +			}
@@ -2293,7 +2293,7 @@
 +			} else {
 +				var8 = var1.getBlockId(var3, var4 - 1, var5);
 +				if((var8 == Block.grass.blockID || var8 == Block.dirt.blockID) && var4 < 256 - var6 - 1) {
-+					var1.setNewBlockAndMetadata(var3, var4 - 1, var5, Block.dirt.blockID, 0);
++					this.setBlockAndMetadata(var1, var3, var4 - 1, var5, Block.dirt.blockID, 0);
 +					var9 = 3;
 +					byte var18 = 0;
 +
@@ -2310,7 +2310,7 @@
 +							for(int var16 = var5 - var13; var16 <= var5 + var13; ++var16) {
 +								int var17 = var16 - var5;
 +								if((Math.abs(var15) != var13 || Math.abs(var17) != var13 || var2.nextInt(2) != 0 && var12 != 0) && !Block.opaqueCubeLookup[var1.getBlockId(var14, var11, var16)]) {
-+									var1.setNewBlockAndMetadata(var14, var11, var16, Block.leaves.blockID, this.field_48199_d);
++									this.setBlockAndMetadata(var1, var14, var11, var16, Block.leaves.blockID, this.field_48199_d);
 +								}
 +							}
 +						}
@@ -2319,22 +2319,22 @@
 +					for(var11 = 0; var11 < var6; ++var11) {
 +						var12 = var1.getBlockId(var3, var4 + var11, var5);
 +						if(var12 == 0 || var12 == Block.leaves.blockID) {
-+							var1.setNewBlockAndMetadata(var3, var4 + var11, var5, Block.wood.blockID, this.field_48201_c);
++							this.setBlockAndMetadata(var1, var3, var4 + var11, var5, Block.wood.blockID, this.field_48201_c);
 +							if(this.field_48200_b && var11 > 0) {
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 - 1, var4 + var11, var5)) {
-+									var1.setNewBlockAndMetadata(var3 - 1, var4 + var11, var5, Block.field_35278_bv.blockID, 8);
++									this.setBlockAndMetadata(var1, var3 - 1, var4 + var11, var5, Block.field_35278_bv.blockID, 8);
 +								}
 +
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3 + 1, var4 + var11, var5)) {
-+									var1.setNewBlockAndMetadata(var3 + 1, var4 + var11, var5, Block.field_35278_bv.blockID, 2);
++									this.setBlockAndMetadata(var1, var3 + 1, var4 + var11, var5, Block.field_35278_bv.blockID, 2);
 +								}
 +
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3, var4 + var11, var5 - 1)) {
-+									var1.setNewBlockAndMetadata(var3, var4 + var11, var5 - 1, Block.field_35278_bv.blockID, 1);
++									this.setBlockAndMetadata(var1, var3, var4 + var11, var5 - 1, Block.field_35278_bv.blockID, 1);
 +								}
 +
 +								if(var2.nextInt(3) > 0 && var1.isAirBlock(var3, var4 + var11, var5 + 1)) {
-+									var1.setNewBlockAndMetadata(var3, var4 + var11, var5 + 1, Block.field_35278_bv.blockID, 4);
++									this.setBlockAndMetadata(var1, var3, var4 + var11, var5 + 1, Block.field_35278_bv.blockID, 4);
 +								}
 +							}
 +						}
@@ -2380,7 +2380,7 @@
 +	}
 +
 +	private void func_48198_a(World var1, int var2, int var3, int var4, int var5) {
-+		var1.setNewBlockAndMetadata(var2, var3, var4, Block.field_35278_bv.blockID, var5);
++		this.setBlockAndMetadata(var1, var2, var3, var4, Block.field_35278_bv.blockID, var5);
 +		int var6 = 4;
 +
 +		while(true) {
@@ -2389,7 +2389,7 @@
 +				return;
 +			}
 +
-+			var1.setNewBlockAndMetadata(var2, var3, var4, Block.field_35278_bv.blockID, var5);
++			this.setBlockAndMetadata(var1, var2, var3, var4, Block.field_35278_bv.blockID, var5);
 +			--var6;
 +		}
  	}
@@ -3854,9 +3854,9 @@
 -					var47 = var47 * (double)var6 / 16.0D;
 -					double var28 = (double)var6 / 2.0D + var47 * 4.0D;
  					double var30 = 0.0D;
--					double var10000 = ((double)var46 - var28) * 12.0D;
+-					double var10000 = ((double)var46 - var28) * 12.0D * 128.0D;
 -					this.worldObj.getClass();
--					double var32 = var10000 / var26;
+-					double var32 = var10000 / 128.0D / var26;
 +					double var32 = ((double)var46 - var28) * 12.0D / var26;
  					if(var32 < 0.0D) {
  						var32 *= 4.0D;
@@ -4223,7 +4223,7 @@
  	}
 --- /dev/null
 +++ net/minecraft/src/Personalization.java
-@@ -1,0 +1,977 @@
+@@ -1,0 +1,978 @@
 +package net.minecraft.src;
 +
 +import net.minecraft.client.Minecraft;
@@ -4238,9 +4238,9 @@
 +public final class Personalization {
 +	public static final boolean DEMO_MODE = false;
 +	public static final boolean DEBUG_MODE = false;
-+	private static final byte LATEST_SAVE_VERSION = 1;
++	private static final byte LATEST_SAVE_VERSION = 2;
 +
-+	public static final Random rand = new Random();
++	public static final Random rand = new Xoroshiro128PlusPlus();
 +	public static NBTTagCompound properties;
 +	public static String version = null;
 +	public static String preset = null;
@@ -4251,7 +4251,7 @@
 +	public static float weirdness = 0.0F;
 +	public static float chaos = 0.0F;
 +
-+	public static boolean controlPanelUnlocked = true;
++	public static boolean controlPanelUnlocked = false;
 +	public static boolean vanillaMode = false;
 +	public static boolean chaosEffects = true;
 +
@@ -4507,7 +4507,8 @@
 +		}
 +
 +		switch (saveVersion) {
-+			case 0: return new GuiStupid();
++			case 0: return new GuiStupid(0);
++			case 1: return new GuiStupid(1);
 +			default: return new GuiMainMenu();
 +		}
 +	}
@@ -5605,7 +5606,7 @@
  							int var13 = var1.getBlockId(var8, var12, var9);
  							if(var13 == Block.dirt.blockID || var13 == Block.grass.blockID) {
 -								var1.setBlock(var8, var12, var9, this.field_35264_a);
-+								var1.setNewBlock(var8, var12, var9, this.field_35264_a);
++								this.setBlock(var1, var8, var12, var9, this.field_35264_a);
  							}
  						}
  					}
@@ -5874,7 +5875,7 @@
 +
 +			var11 = var1.getBlockId(var3, var4 - 1, var5);
 +			if(var11 == Block.grass.blockID || var11 == Block.dirt.blockID) {
-+				var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
++				this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
 +				var21 = var2.nextInt(2);
 +				var13 = 1;
 +				byte var22 = 0;
@@ -5890,7 +5891,7 @@
 +						for(int var19 = var5 - var21; var19 <= var5 + var21; ++var19) {
 +							int var20 = var19 - var5;
 +							if((Math.abs(var18) != var21 || Math.abs(var20) != var21 || var21 <= 0) && !Block.opaqueCubeLookup[var1.getBlockId(var17, var16, var19)]) {
-+								var1.setNewBlockAndMetadata(var17, var16, var19, Block.leaves.blockID, 1);
++								this.setBlockAndMetadata(var1, var17, var16, var19, Block.leaves.blockID, 1);
 +							}
 +						}
 +					}
@@ -5912,7 +5913,7 @@
 +				for(var16 = 0; var16 < var6 - var15; ++var16) {
 +					var17 = var1.getBlockId(var3, var4 + var16, var5);
 +					if(var17 == 0 || var17 == Block.leaves.blockID) {
-+						var1.setNewBlockAndMetadata(var3, var4 + var16, var5, Block.wood.blockID, 1);
++						this.setBlockAndMetadata(var1, var3, var4 + var16, var5, Block.wood.blockID, 1);
 +					}
 +				}
 +
@@ -7253,7 +7254,7 @@
 -								if(var39 * var39 + var42 * var42 + var45 * var45 < 1.0D && var1.getBlockId(var38, var41, var44) == Block.stone.blockID) {
 -									var1.setBlock(var38, var41, var44, this.minableBlockId);
 +								if(var39 * var39 + var42 * var42 + var45 * var45 < 1.0D && var1.getBlockId(var38, var41, var44) == (this.minableBlockId == Block.oreQuartz.blockID ? Block.netherrack.blockID :  Block.stone.blockID)) {
-+									var1.setNewBlock(var38, var41, var44, this.minableBlockId);
++									this.setBlock(var1, var38, var41, var44, this.minableBlockId);
  								}
  							}
  						}
@@ -7427,7 +7428,7 @@
 +		}
 +
 +		(this.showPresets ? this.presetSlotContainer : this.optionSlotContainer).drawScreen(var1, var2, var3);
-+		this.drawCenteredString(this.fontRenderer, "Beta 1.8.X v1.0.1 Control Panel", this.width / 2, 20, 0xFFFFFF);
++		this.drawCenteredString(this.fontRenderer, "Beta 1.8.X v1.0.2 Control Panel", this.width / 2, 20, 0xFFFFFF);
 +		this.drawString(this.fontRenderer, "Betaness: " + (int)(Personalization.betaness * 100.0F) / 100.0F, 2, 2, 0x2a7f2a);
 +		this.drawString(this.fontRenderer, "Weirdness: " + (int)(Personalization.weirdness * 100.0F) / 100.0F, 2, 12, 0x2a2a7f);
 +		this.drawString(this.fontRenderer, "Chaos: " + (int)(Personalization.chaos * 100.0F) / 100.0F, 2, 22, 0x7f2a2a);
@@ -9776,7 +9777,7 @@
 +		int var5 = var1.getBlockId(var2, var3, var4);
 +
 +		if (var5 == 0 || Block.blocksList[var5].blockMaterial == Material.leaves) {
-+			var1.setNewBlockAndMetadata(var2, var3, var4, Block.leaves.blockID, 0);
++			this.setBlockAndMetadata(var1, var2, var3, var4, Block.leaves.blockID, 0);
 +		}
 +	}
 +
@@ -10326,7 +10327,7 @@
  			int var9 = var5 + var2.nextInt(8) - var2.nextInt(8);
  			if(var1.isAirBlock(var7, var8, var9) && ((BlockFlower)Block.blocksList[this.plantBlockId]).canBlockStay(var1, var7, var8, var9)) {
 -				var1.setBlock(var7, var8, var9, this.plantBlockId);
-+				var1.setNewBlock(var7, var8, var9, this.plantBlockId);
++				this.setBlock(var1, var7, var8, var9, this.plantBlockId);
  			}
  		}
  
@@ -11189,7 +11190,7 @@
  				this.latestSoundID = (this.latestSoundID + 1) % 256;
  				String var5 = "sound_" + this.latestSoundID;
  				sndSystem.newSource(false, var5, var4.soundUrl, var4.soundName, false, 0.0F, 0.0F, 0.0F, 0, 0.0F);
-@@ -185,12 +216,131 @@
+@@ -185,12 +216,132 @@
  					var2 = 1.0F;
  				}
  
@@ -11288,7 +11289,7 @@
 +		}
 +	}
 +
-+	public void playSecretMusic() {
++	public void playSecretMusic(float pitch) {
 +		if(loaded && this.options.musicVolume != 0.0F) {
 +			if(!sndSystem.playing("ControlPanelMusic")) {
 +				this.stopAllMusic();
@@ -11297,6 +11298,7 @@
 +				try {
 +					sndSystem.backgroundMusic("ControlPanelMusic", file.toURI().toURL(), file.getName(), true);
 +					sndSystem.setVolume("ControlPanelMusic", this.options.musicVolume * 0.5F);
++					sndSystem.setPitch("ControlPanelMusic", pitch);
 +					sndSystem.play("ControlPanelMusic");
 +				} catch (MalformedURLException e) {
 +					e.printStackTrace();
@@ -12074,7 +12076,7 @@
 -									if((Math.abs(var15) != var18 || Math.abs(var17) != var18 || var18 <= 0) && !Block.opaqueCubeLookup[var1.getBlockId(var14, var13, var16)]) {
 -										var1.setBlockAndMetadata(var14, var13, var16, Block.leaves.blockID, 1);
 -									}
-+					var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
++					this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
 +					var18 = 0;
 +
 +					for(var13 = var4 + var6; var13 >= var4 + var7; --var13) {
@@ -12084,7 +12086,7 @@
 +							for(int var16 = var5 - var18; var16 <= var5 + var18; ++var16) {
 +								int var17 = var16 - var5;
 +								if((Math.abs(var15) != var18 || Math.abs(var17) != var18 || var18 <= 0) && !Block.opaqueCubeLookup[var1.getBlockId(var14, var13, var16)]) {
-+									var1.setNewBlockAndMetadata(var14, var13, var16, Block.leaves.blockID, 1);
++									this.setBlockAndMetadata(var1, var14, var13, var16, Block.leaves.blockID, 1);
  								}
  							}
 -
@@ -12116,7 +12118,7 @@
 +					for(var13 = 0; var13 < var6 - 1; ++var13) {
 +						var14 = var1.getBlockId(var3, var4 + var13, var5);
 +						if(var14 == 0 || var14 == Block.leaves.blockID) {
-+							var1.setNewBlockAndMetadata(var3, var4 + var13, var5, Block.wood.blockID, 1);
++							this.setBlockAndMetadata(var1, var3, var4 + var13, var5, Block.wood.blockID, 1);
 +						}
 +					}
 +
@@ -12958,31 +12960,41 @@
  		return var1;
 --- /dev/null
 +++ net/minecraft/src/GuiStupid.java
-@@ -1,0 +1,111 @@
+@@ -1,0 +1,121 @@
 +package net.minecraft.src;
 +
 +import org.lwjgl.opengl.GL11;
 +
 +public class GuiStupid extends GuiControlPanel {
-+	private static final String[] messages = {
-+			"Hi! I was a stupid dev!",
-+			"You may have noticed that the game is very adventure-esque.",
-+			"That's a huge bug! Sorry.",
-+			"I rushed the release of this mod and I didn't test it properly.",
-+			"It's fixed now, but the damage has already been done.",
-+			"Time to reset your settings!"
++	private static final String[][] messages = {
++			{
++					"Hi! I was a stupid dev!",
++					"You may have noticed that the game is very adventure-esque.",
++					"That's a huge bug! Sorry.",
++					"I rushed the release of this mod and I didn't test it properly.",
++					"It's fixed now, but the damage has already been done.",
++					"Time to reset your settings!"
++			},
++			{
++					"AAGH! I DIDN'T FIX IT!",
++					"Turns out mining ore caused the bug.",
++					"Fixed now! Resetting again! Sorry!"
++			}
 +	};
 +
 +	private int updateCounter = -10;
 +	private int state = 0;
 +	private int msgNum = 0;
++	private int type = 0;
 +	private boolean justClicked;
 +
-+	public GuiStupid() {
++	public GuiStupid(int type) {
++		this.type = type;
 +		Personalization.betaness = 0.0F;
 +		Personalization.weirdness = 0.0F;
 +		Personalization.chaos = 0.0F;
 +		Personalization.days = 0;
++		Personalization.controlPanelUnlocked = false;
 +		Personalization.vanillaMode = Personalization.rand.nextInt(3) == 0;
 +		Personalization.version = null;
 +		Personalization.noiseSeed = 0;
@@ -13004,7 +13016,7 @@
 +			this.updateCounter = 0;
 +			this.game.sndManager.playSoundFX("mob.wolf.bark", 1.0F, 1.2F + Personalization.rand.nextFloat() * 0.2F);
 +		} else if (this.state == 1 && (this.updateCounter > 100 || this.justClicked)) {
-+			if (++this.msgNum >= messages.length) {
++			if (++this.msgNum >= messages[this.type].length) {
 +				this.state = 2;
 +			} else {
 +				this.game.sndManager.playSoundFX("mob.wolf.bark", 1.0F, 1.2F + Personalization.rand.nextFloat() * 0.2F);
@@ -13013,7 +13025,7 @@
 +		}
 +
 +		this.justClicked = false;
-+		this.game.sndManager.playSecretMusic();
++		this.game.sndManager.playSecretMusic(1.0F + this.type * 0.25F);
 +	}
 +
 +	public void drawScreen(int var1, int var2, float var3) {
@@ -13051,8 +13063,8 @@
 +			GL11.glScalef(2.0F, 2.0F, 0.0F);
 +			GL11.glEnable(GL11.GL_BLEND);
 +			this.fontRenderer.lineHeight = 10;
-+			this.fontRenderer.drawSplitString(messages[msgNum], 1, 1, this.width / 4, 0xFFFFFF, true);
-+			this.fontRenderer.drawSplitString(messages[msgNum], 0, 0, this.width / 4, 0xFFFFFF, false);
++			this.fontRenderer.drawSplitString(messages[type][msgNum], 1, 1, this.width / 4, 0xFFFFFF, true);
++			this.fontRenderer.drawSplitString(messages[type][msgNum], 0, 0, this.width / 4, 0xFFFFFF, false);
 +			this.fontRenderer.lineHeight = 8;
 +			GL11.glDisable(GL11.GL_BLEND);
 +			GL11.glPopMatrix();
@@ -14083,6 +14095,28 @@
 +					this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F);
  				}
  			}
+ 
+--- net/minecraft/src/BlockSapling.java
++++ net/minecraft/src/BlockSapling.java
+@@ -32,7 +32,7 @@
+ 	public void growTree(World var1, int var2, int var3, int var4, Random var5) {
+ 		int var6 = var1.getBlockMetadata(var2, var3, var4) & 3;
+ 		var1.setBlock(var2, var3, var4, 0);
+-		Object var7 = null;
++		WorldGenerator var7;
+ 		if(var6 == 1) {
+ 			var7 = new WorldGenTaiga2();
+ 		} else if(var6 == 2) {
+@@ -43,8 +43,9 @@
+ 				var7 = new WorldGenBigTree();
+ 			}
+ 		}
++		var7.inPlayerModified = true;
+ 
+-		if(!((WorldGenerator)var7).generate(var1, var5, var2, var3, var4)) {
++		if(!var7.generate(var1, var5, var2, var3, var4)) {
+ 			var1.setBlockAndMetadata(var2, var3, var4, this.blockID, var6);
+ 		}
  
 --- net/minecraft/src/GuiMultiplayer.java
 +++ net/minecraft/src/GuiMultiplayer.java
@@ -15530,7 +15564,7 @@
 -
 -						return true;
 -					}
-+					var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
++					this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
 +
 +					int var13;
 +					int var16;
@@ -15544,7 +15578,7 @@
 +							for(int var14 = var5 - var11; var14 <= var5 + var11; ++var14) {
 +								int var15 = var14 - var5;
 +								if((Math.abs(var13) != var11 || Math.abs(var15) != var11 || var2.nextInt(2) != 0 && var10 != 0) && !Block.opaqueCubeLookup[var1.getBlockId(var12, var16, var14)]) {
-+									var1.setNewBlock(var12, var16, var14, Block.leaves.blockID);
++									this.setBlock(var1, var12, var16, var14, Block.leaves.blockID);
 +								}
 +							}
 +						}
@@ -15553,7 +15587,7 @@
 +					for(var16 = 0; var16 < var6; ++var16) {
 +						var10 = var1.getBlockId(var3, var4 + var16, var5);
 +						if(var10 == 0 || var10 == Block.leaves.blockID || var10 == Block.waterMoving.blockID || var10 == Block.waterStill.blockID) {
-+							var1.setNewBlock(var3, var4 + var16, var5, Block.wood.blockID);
++							this.setBlock(var1, var3, var4 + var16, var5, Block.wood.blockID);
 +						}
 +					}
 +
@@ -15595,7 +15629,7 @@
  				for(int var11 = 0; var11 < var10; ++var11) {
  					if(Block.cactus.canBlockStay(var1, var7, var8 + var11, var9)) {
 -						var1.setBlock(var7, var8 + var11, var9, Block.cactus.blockID);
-+						var1.setNewBlock(var7, var8 + var11, var9, Block.cactus.blockID);
++						this.setBlock(var1, var7, var8 + var11, var9, Block.cactus.blockID);
  					}
  				}
  			}
@@ -15648,6 +15682,35 @@
 -		super.saveWorldInfoAndPlayer(var1, var2);
 -	}
 -}
+--- net/minecraft/src/WorldGenerator.java
++++ net/minecraft/src/WorldGenerator.java
+@@ -3,8 +3,26 @@
+ import java.util.Random;
+ 
+ public abstract class WorldGenerator {
++	public boolean inPlayerModified = false;
++
+ 	public abstract boolean generate(World var1, Random var2, int var3, int var4, int var5);
+ 
+ 	public void func_517_a(double var1, double var3, double var5) {
++	}
++
++	public void setBlock(World var1, int var2, int var3, int var4, int var5) {
++		if (this.inPlayerModified) {
++			var1.setBlock(var2, var3, var4, var5);
++		} else {
++			var1.setNewBlock(var2, var3, var4, var5);
++		}
++	}
++
++	public void setBlockAndMetadata(World var1, int var2, int var3, int var4, int var5, int var6) {
++		if (this.inPlayerModified) {
++			var1.setBlockAndMetadata(var2, var3, var4, var5, var6);
++		} else {
++			var1.setNewBlockAndMetadata(var2, var3, var4, var5, var6);
++		}
+ 	}
+ }
 --- net/minecraft/src/CraftingManager.java
 +++ net/minecraft/src/CraftingManager.java
 @@ -6,13 +6,17 @@
@@ -15776,108 +15839,6 @@
 +
 +
  }
---- net/minecraft/src/StructureComponent.java
-+++ net/minecraft/src/StructureComponent.java
-@@ -37,7 +37,7 @@
- 			}
- 
- 			var3 = (StructureComponent)var2.next();
--		} while(var3.getBoundingBox() == null || !var3.getBoundingBox().func_35740_a(var1));
-+		} while(var3.func_35021_b() == null || !var3.func_35021_b().func_35740_a(var1));
- 
- 		return var3;
- 	}
-@@ -289,18 +289,18 @@
- 	}
- 
- 	protected void func_35018_a(World var1, int var2, int var3, int var4, int var5, int var6, StructureBoundingBox var7) {
--		int var8 = this.getXWithOffset(var4, var6);
--		int var9 = this.getYWithOffset(var5);
--		int var10 = this.getZWithOffset(var4, var6);
-+		int var8 = this.func_35017_a(var4, var6);
-+		int var9 = this.func_35008_a(var5);
-+		int var10 = this.func_35006_b(var4, var6);
- 		if(var7.func_35742_b(var8, var9, var10)) {
--			var1.setBlockAndMetadata(var8, var9, var10, var2, var3);
-+			var1.setNewBlockAndMetadata(var8, var9, var10, var2, var3);
- 		}
- 	}
- 
- 	protected int func_35007_a(World var1, int var2, int var3, int var4, StructureBoundingBox var5) {
--		int var6 = this.getXWithOffset(var2, var4);
--		int var7 = this.getYWithOffset(var3);
--		int var8 = this.getZWithOffset(var2, var4);
-+		int var6 = this.func_35017_a(var2, var4);
-+		int var7 = this.func_35008_a(var3);
-+		int var8 = this.func_35006_b(var2, var4);
- 		return !var5.func_35742_b(var6, var7, var8) ? 0 : var1.getBlockId(var6, var7, var8);
- 	}
- 
-@@ -387,9 +387,9 @@
- 	}
- 
- 	protected void func_35016_b(World var1, int var2, int var3, int var4, StructureBoundingBox var5) {
--		int var6 = this.getXWithOffset(var2, var4);
--		int var7 = this.getYWithOffset(var3);
--		int var8 = this.getZWithOffset(var2, var4);
-+		int var6 = this.func_35017_a(var2, var4);
-+		int var7 = this.func_35008_a(var3);
-+		int var8 = this.func_35006_b(var2, var4);
- 		if(var5.func_35742_b(var6, var7, var8)) {
- 			while(!var1.isAirBlock(var6, var7, var8)) {
- 				var1.getClass();
-@@ -397,7 +397,7 @@
- 					break;
- 				}
- 
--				var1.setBlockAndMetadata(var6, var7, var8, 0, 0);
-+				var1.setNewBlockAndMetadata(var6, var7, var8, 0, 0);
- 				++var7;
- 			}
- 
-@@ -405,12 +405,12 @@
- 	}
- 
- 	protected void func_35005_b(World var1, int var2, int var3, int var4, int var5, int var6, StructureBoundingBox var7) {
--		int var8 = this.getXWithOffset(var4, var6);
--		int var9 = this.getYWithOffset(var5);
--		int var10 = this.getZWithOffset(var4, var6);
-+		int var8 = this.func_35017_a(var4, var6);
-+		int var9 = this.func_35008_a(var5);
-+		int var10 = this.func_35006_b(var4, var6);
- 		if(var7.func_35742_b(var8, var9, var10)) {
- 			while((var1.isAirBlock(var8, var9, var10) || var1.getBlockMaterial(var8, var9, var10).getIsLiquid()) && var9 > 1) {
--				var1.setBlockAndMetadata(var8, var9, var10, var2, var3);
-+				var1.setNewBlockAndMetadata(var8, var9, var10, var2, var3);
- 				--var9;
- 			}
- 
-@@ -418,9 +418,9 @@
- 	}
- 
- 	protected void func_35003_a(World var1, StructureBoundingBox var2, Random var3, int var4, int var5, int var6, StructurePieceTreasure[] var7, int var8) {
--		int var9 = this.getXWithOffset(var4, var6);
--		int var10 = this.getYWithOffset(var5);
--		int var11 = this.getZWithOffset(var4, var6);
-+		int var9 = this.func_35017_a(var4, var6);
-+		int var10 = this.func_35008_a(var5);
-+		int var11 = this.func_35006_b(var4, var6);
- 		if(var2.func_35742_b(var9, var10, var11) && var1.getBlockId(var9, var10, var11) != Block.chest.blockID) {
- 			var1.setBlockWithNotify(var9, var10, var11, Block.chest.blockID);
- 			TileEntityChest var12 = (TileEntityChest)var1.getBlockTileEntity(var9, var10, var11);
-@@ -447,9 +447,9 @@
- 	}
- 
- 	protected void func_35002_a(World var1, StructureBoundingBox var2, Random var3, int var4, int var5, int var6, int var7) {
--		int var8 = this.getXWithOffset(var4, var6);
--		int var9 = this.getYWithOffset(var5);
--		int var10 = this.getZWithOffset(var4, var6);
-+		int var8 = this.func_35017_a(var4, var6);
-+		int var9 = this.func_35008_a(var5);
-+		int var10 = this.func_35006_b(var4, var6);
- 		if(var2.func_35742_b(var8, var9, var10)) {
- 			ItemDoor.func_35434_a(var1, var8, var9, var10, var7, Block.doorWood);
- 		}
 --- net/minecraft/src/TileEntity.java
 +++ net/minecraft/src/TileEntity.java
 @@ -125,5 +125,6 @@
@@ -16760,10 +16721,10 @@
 +                int var20 = var1.getBlockId(var3, var4 - 1, var5);
 +
 +                if ((var20 == Block.grass.blockID || var20 == Block.dirt.blockID)) {
-+                    var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
-+                    var1.setNewBlock(var3 + 1, var4 - 1, var5, Block.dirt.blockID);
-+                    var1.setNewBlock(var3 + 1, var4 - 1, var5 + 1, Block.dirt.blockID);
-+                    var1.setNewBlock(var3, var4 - 1, var5 + 1, Block.dirt.blockID);
++                    this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
++                    this.setBlock(var1, var3 + 1, var4 - 1, var5, Block.dirt.blockID);
++                    this.setBlock(var1, var3 + 1, var4 - 1, var5 + 1, Block.dirt.blockID);
++                    this.setBlock(var1, var3, var4 - 1, var5 + 1, Block.dirt.blockID);
 +                    int var21 = var2.nextInt(4);
 +                    var10 = var6 - var2.nextInt(4);
 +                    var11 = 2 - var2.nextInt(3);
@@ -16786,10 +16747,10 @@
 +
 +                        if (var17 == Material.air
 +                                || var17 == Material.leaves) {
-+                            var1.setNewBlockAndMetadata(var22, var16, var13, Block.wood.blockID, 1);
-+                            var1.setNewBlockAndMetadata(var22 + 1, var16, var13, Block.wood.blockID, 1);
-+                            var1.setNewBlockAndMetadata(var22, var16, var13 + 1, Block.wood.blockID, 1);
-+                            var1.setNewBlockAndMetadata(var22 + 1, var16, var13 + 1, Block.wood.blockID, 1);
++                            this.setBlockAndMetadata(var1, var22, var16, var13, Block.wood.blockID, 1);
++                            this.setBlockAndMetadata(var1, var22 + 1, var16, var13, Block.wood.blockID, 1);
++                            this.setBlockAndMetadata(var1, var22, var16, var13 + 1, Block.wood.blockID, 1);
++                            this.setBlockAndMetadata(var1, var22 + 1, var16, var13 + 1, Block.wood.blockID, 1);
 +                            var14 = var16;
 +                        }
 +                    }
@@ -16844,7 +16805,7 @@
 +                                int var18;
 +
 +                                for (var18 = 0; var18 < var25; ++var18) {
-+                                    var1.setNewBlockAndMetadata(var3 + var15, var14 - var18 - 1,
++                                    this.setBlockAndMetadata(var1, var3 + var15, var14 - var18 - 1,
 +                                            var5 + var16, Block.wood.blockID, 1);
 +                                }
 +
@@ -16881,7 +16842,7 @@
 +
 +    private void func_150526_a(World var1, int var2, int var3, int var4) {
 +        if (var1.isAirBlock(var2, var3, var4)) {
-+            var1.setNewBlockAndMetadata(var2, var3, var4, Block.leaves.blockID, 0);
++            this.setBlockAndMetadata(var1, var2, var3, var4, Block.leaves.blockID, 0);
 +        }
 +    }
 +
@@ -19088,7 +19049,7 @@
  					int var10 = var5 + var2.nextInt(8) - var2.nextInt(8);
  					if(var1.isAirBlock(var8, var9, var10) && ((BlockFlower)Block.blocksList[this.field_28058_a]).canBlockStay(var1, var8, var9, var10)) {
 -						var1.setBlock(var8, var9, var10, this.field_28058_a);
-+						var1.setNewBlock(var8, var9, var10, this.field_28058_a);
++						this.setBlock(var1, var8, var9, var10, this.field_28058_a);
  					}
  				}
  
@@ -20456,6 +20417,17 @@
  		this.drawTexturedModalRect(var8, var9, 0, 0, this.achievementsPaneWidth, this.achievementsPaneHeight);
  		GL11.glPopMatrix();
  		this.zLevel = 0.0F;
+@@ -325,10 +325,6 @@
+ 
+ 			this.fontRenderer.drawStringWithShadow(var31, var17, var33, this.statFileWriter.canUnlockAchievement(var27) ? (var27.getSpecial() ? -128 : -1) : (var27.getSpecial() ? -8355776 : -8355712));
+ 		}
+-
+-		GL11.glEnable(GL11.GL_DEPTH_TEST);
+-		GL11.glEnable(GL11.GL_LIGHTING);
+-		RenderHelper.disableStandardItemLighting();
+ 	}
+ 
+ 	public boolean doesGuiPauseGame() {
 --- net/minecraft/src/McRegionChunkLoader.java
 +++ /dev/null
 @@ -1,69 +1,0 @@
@@ -21013,7 +20985,7 @@
  			int var9 = var5 + var2.nextInt(8) - var2.nextInt(8);
  			if(var1.isAirBlock(var7, var8, var9) && var1.getBlockId(var7, var8 - 1, var9) == Block.grass.blockID && Block.pumpkin.canPlaceBlockAt(var1, var7, var8, var9)) {
 -				var1.setBlockAndMetadata(var7, var8, var9, Block.pumpkin.blockID, var2.nextInt(4));
-+				var1.setNewBlockAndMetadata(var7, var8, var9, Block.pumpkin.blockID, var2.nextInt(4));
++				this.setBlockAndMetadata(var1, var7, var8, var9, Block.pumpkin.blockID, var2.nextInt(4));
  			}
  		}
  
@@ -21399,7 +21371,7 @@
 +				int var7 = var1.getBlockId(var3, var4, var5);
 +				if(var7 == Block.dirt.blockID || var7 == Block.grass.blockID) {
 +					++var4;
-+					var1.setNewBlockAndMetadata(var3, var4, var5, Block.wood.blockID, this.field_48196_b);
++					this.setBlockAndMetadata(var1, var3, var4, var5, Block.wood.blockID, this.field_48196_b);
 +
 +					for(int var8 = var4; var8 <= var4 + 2; ++var8) {
 +						int var9 = var8 - var4;
@@ -21411,7 +21383,7 @@
 +							for(int var13 = var5 - var10; var13 <= var5 + var10; ++var13) {
 +								int var14 = var13 - var5;
 +								if((Math.abs(var12) != var10 || Math.abs(var14) != var10 || var2.nextInt(2) != 0) && !Block.opaqueCubeLookup[var1.getBlockId(var11, var8, var13)]) {
-+									var1.setNewBlockAndMetadata(var11, var8, var13, Block.leaves.blockID, this.field_48197_a);
++									this.setBlockAndMetadata(var1, var11, var8, var13, Block.leaves.blockID, this.field_48197_a);
 +								}
 +							}
 +						}
@@ -21659,7 +21631,7 @@
  				for(var10 = 0; var10 < 8; ++var10) {
  					if(var6[(var8 * 16 + var32) * 8 + var10]) {
 -						var1.setBlock(var3 + var8, var4 + var10, var5 + var32, var10 >= 4 ? 0 : this.blockIndex);
-+						var1.setNewBlock(var3 + var8, var4 + var10, var5 + var32, var10 >= 4 ? 0 : this.blockIndex);
++						this.setBlock(var1, var3 + var8, var4 + var10, var5 + var32, var10 >= 4 ? 0 : this.blockIndex);
  					}
  				}
  			}
@@ -21668,7 +21640,7 @@
  				for(var10 = 4; var10 < 8; ++var10) {
  					if(var6[(var8 * 16 + var32) * 8 + var10] && var1.getBlockId(var3 + var8, var4 + var10 - 1, var5 + var32) == Block.dirt.blockID && var1.getSavedLightValue(EnumSkyBlock.Sky, var3 + var8, var4 + var10, var5 + var32) > 0) {
 -						var1.setBlock(var3 + var8, var4 + var10 - 1, var5 + var32, Block.grass.blockID);
-+						var1.setNewBlock(var3 + var8, var4 + var10 - 1, var5 + var32, Block.grass.blockID);
++						this.setBlock(var1, var3 + var8, var4 + var10 - 1, var5 + var32, Block.grass.blockID);
  					}
  				}
  			}
@@ -21677,7 +21649,7 @@
  						var33 = !var6[(var8 * 16 + var32) * 8 + var10] && (var8 < 15 && var6[((var8 + 1) * 16 + var32) * 8 + var10] || var8 > 0 && var6[((var8 - 1) * 16 + var32) * 8 + var10] || var32 < 15 && var6[(var8 * 16 + var32 + 1) * 8 + var10] || var32 > 0 && var6[(var8 * 16 + (var32 - 1)) * 8 + var10] || var10 < 7 && var6[(var8 * 16 + var32) * 8 + var10 + 1] || var10 > 0 && var6[(var8 * 16 + var32) * 8 + (var10 - 1)]);
  						if(var33 && (var10 < 4 || var2.nextInt(2) != 0) && var1.getBlockMaterial(var3 + var8, var4 + var10, var5 + var32).isSolid()) {
 -							var1.setBlock(var3 + var8, var4 + var10, var5 + var32, Block.stone.blockID);
-+							var1.setNewBlock(var3 + var8, var4 + var10, var5 + var32, Block.stone.blockID);
++							this.setBlock(var1, var3 + var8, var4 + var10, var5 + var32, Block.stone.blockID);
  						}
  					}
  				}
@@ -21688,7 +21660,7 @@
  							int var13 = var1.getBlockId(var8, var12, var9);
  							if(var13 == Block.dirt.blockID || var13 == Block.blockClay.blockID) {
 -								var1.setBlock(var8, var12, var9, this.clayBlockId);
-+								var1.setNewBlock(var8, var12, var9, this.clayBlockId);
++								this.setBlock(var1, var8, var12, var9, this.clayBlockId);
  							}
  						}
  					}
@@ -21852,7 +21824,7 @@
 -									if((Math.abs(var13) != var11 || Math.abs(var15) != var11 || var2.nextInt(2) != 0 && var10 != 0) && !Block.opaqueCubeLookup[var1.getBlockId(var12, var16, var14)]) {
 -										var1.setBlockAndMetadata(var12, var16, var14, Block.leaves.blockID, 2);
 -									}
-+					var1.setNewBlock(var3, var4 - 1, var5, Block.dirt.blockID);
++					this.setBlock(var1, var3, var4 - 1, var5, Block.dirt.blockID);
 +
 +					int var16;
 +					for(var16 = var4 - 3 + var6; var16 <= var4 + var6; ++var16) {
@@ -21865,7 +21837,7 @@
 +							for(int var14 = var5 - var11; var14 <= var5 + var11; ++var14) {
 +								int var15 = var14 - var5;
 +								if((Math.abs(var13) != var11 || Math.abs(var15) != var11 || var2.nextInt(2) != 0 && var10 != 0) && !Block.opaqueCubeLookup[var1.getBlockId(var12, var16, var14)]) {
-+									var1.setNewBlockAndMetadata(var12, var16, var14, Block.leaves.blockID, 2);
++									this.setBlockAndMetadata(var1, var12, var16, var14, Block.leaves.blockID, 2);
  								}
  							}
  						}
@@ -21879,7 +21851,7 @@
 +					for(var16 = 0; var16 < var6; ++var16) {
 +						var10 = var1.getBlockId(var3, var4 + var16, var5);
 +						if(var10 == 0 || var10 == Block.leaves.blockID) {
-+							var1.setNewBlockAndMetadata(var3, var4 + var16, var5, Block.wood.blockID, 2);
++							this.setBlockAndMetadata(var1, var3, var4 + var16, var5, Block.wood.blockID, 2);
  						}
 -
 -						return true;
@@ -22080,7 +22052,7 @@
 +			if(var1.isAirBlock(var3, var4, var5)) {
 +				for(int var8 = 2; var8 <= 5; ++var8) {
 +					if(Block.field_35278_bv.canPlaceBlockOnSide(var1, var3, var4, var5, var8)) {
-+						var1.setNewBlockAndMetadata(var3, var4, var5, Block.field_35278_bv.blockID, 1 << vineGrowth[PistonBlockTextures.field_31057_a[var8]]);
++						this.setBlockAndMetadata(var1, var3, var4, var5, Block.field_35278_bv.blockID, 1 << vineGrowth[PistonBlockTextures.field_31057_a[var8]]);
 +						break;
 +					}
 +				}
@@ -22825,7 +22797,7 @@
  				for(int var11 = 0; var11 < var10; ++var11) {
  					if(Block.reed.canBlockStay(var1, var7, var8 + var11, var9)) {
 -						var1.setBlock(var7, var8 + var11, var9, Block.reed.blockID);
-+						var1.setNewBlock(var7, var8 + var11, var9, Block.reed.blockID);
++						this.setBlock(var1, var7, var8 + var11, var9, Block.reed.blockID);
  					}
  				}
  			}
@@ -23005,17 +22977,6 @@
  				byte var4 = 100;
  				if(this.message.length() > var4) {
  					this.message = this.message.substring(0, var4);
---- net/minecraft/src/ComponentVillagePathGen.java
-+++ net/minecraft/src/ComponentVillagePathGen.java
-@@ -84,7 +84,7 @@
- 			for(int var5 = this.field_35024_g.field_35752_c; var5 <= this.field_35024_g.field_35748_f; ++var5) {
- 				if(var3.func_35742_b(var4, 64, var5)) {
- 					int var6 = var1.getTopSolidOrLiquidBlock(var4, var5) - 1;
--					var1.setBlock(var4, var6, var5, Block.gravel.blockID);
-+					var1.setNewBlock(var4, var6, var5, Block.gravel.blockID);
- 				}
- 			}
- 		}
 --- /dev/null
 +++ net/minecraft/src/BlockSkyPortalFrame.java
 @@ -1,0 +1,23 @@
@@ -23976,6 +23937,14 @@
  		}
  
  		return false;
+@@ -82,6 +79,7 @@
+ 			} else if(this.blockID == Block.mushroomRed.blockID) {
+ 				var8 = new WorldGenBigMushroom(1);
+ 			}
++			var8.inPlayerModified = true;
+ 
+ 			if(var8 != null && var8.generate(var1, var5, var2, var3, var4)) {
+ 				return true;
 --- net/minecraft/src/BlockCrops.java
 +++ net/minecraft/src/BlockCrops.java
 @@ -88,6 +88,7 @@
