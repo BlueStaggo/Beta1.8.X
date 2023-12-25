@@ -13920,7 +13920,8 @@
  	}
  
  	public int idDropped(int var1, Random var2) {
- 		return Block.cobblestone.blockID;
+-		return Block.cobblestone.blockID;
++		return this.blockID == 1 ? Block.cobblestone.blockID : this.blockID;
 +	}
 +
 +	public int colorMultiplier(IBlockAccess var1, int var2, int var3, int var4) {
