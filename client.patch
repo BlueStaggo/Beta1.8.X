@@ -7780,7 +7780,7 @@
 -		if(this.field_35221_d > 0) {
 -			--this.field_35221_d;
 -			if(this.field_35221_d == 0) {
-+		this.noClip = this.field_35212_aW.field_35757_b;
++		this.noClip = Personalization.DEBUG_MODE && this.field_35212_aW.field_35757_b;
 +
 +		if(this.sprintTimer > 0) {
 +			--this.sprintTimer;
@@ -13920,8 +13920,7 @@
  	}
  
  	public int idDropped(int var1, Random var2) {
--		return Block.cobblestone.blockID;
-+		return var1 == 1 ? Block.cobblestone.blockID : var1;
+ 		return Block.cobblestone.blockID;
 +	}
 +
 +	public int colorMultiplier(IBlockAccess var1, int var2, int var3, int var4) {
