@@ -1266,6 +1266,133 @@
  	}
  
  	private String pickMobSpawner(Random var1) {
+--- /dev/null
++++ net/minecraft/src/PixelationFilter.java
+@@ -1,0 +1,124 @@
++package net.minecraft.src;
++
++import org.lwjgl.opengl.GL11;
++import org.lwjgl.opengl.GL20;
++import org.lwjgl.opengl.GLContext;
++
++public class PixelationFilter {
++	private static final String fs = String.join("\n",
++			"uniform sampler2D screen;",
++			"uniform int width, height;",
++			"uniform float scaledWidth, scaledHeight;",
++			"void main() {",
++//			"   vec2 scale = vec2(width / scaledWidth, height / scaledHeight);",
++//			"   vec2 coord = floor((gl_FragCoord.xy / scale) * scale) / vec2(width, height);",
++			"   float px = 2.0 / float(width);",
++			"   float py = 2.0 / float(height);",
++			"   vec2 coord = vec2(px * floor(gl_TexCoord[0].x / px), py * floor(gl_TexCoord[0].y / py));",
++			"   gl_FragColor = texture2D(screen, coord);",
++			"}"
++	);
++	private static final String vs = String.join("\n",
++			"void main() {",
++			"   gl_Position = ftransform();",
++			"   gl_TexCoord[0] = gl_MultiTexCoord0;",
++			"}"
++	);
++
++	private static final boolean GL30_SUPPORTED = GLContext.getCapabilities().OpenGL30;
++
++	private static final int SHADER;
++	private static final int SHADER_WIDTH;
++	private static final int SHADER_HEIGHT;
++	private static final int SHADER_SCALED_WIDTH;
++	private static final int SHADER_SCALED_HEIGHT;
++
++	private static final Framebuffer FRAMEBUFFER = new Framebuffer(1, 1);
++
++	public static boolean enabled = false;
++
++	static {
++		if (!GL30_SUPPORTED) {
++			SHADER = 0;
++			SHADER_WIDTH = 0;
++			SHADER_HEIGHT = 0;
++			SHADER_SCALED_WIDTH = 0;
++			SHADER_SCALED_HEIGHT = 0;
++		} else {
++			int f = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
++			GL20.glShaderSource(f, fs);
++			GL20.glCompileShader(f);
++			if (GL20.glGetShaderi(f, GL20.GL_COMPILE_STATUS) == 0) {
++				String log = GL20.glGetShaderInfoLog(f, 1000);
++				System.err.println("Fragment failure\n" + log);
++			}
++
++			int v = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
++			GL20.glShaderSource(v, vs);
++			GL20.glCompileShader(v);
++			if (GL20.glGetShaderi(v, GL20.GL_COMPILE_STATUS) == 0) {
++				String log = GL20.glGetShaderInfoLog(v, 1000);
++				System.err.println("Vertex failure\n" + log);
++			}
++
++			SHADER = GL20.glCreateProgram();
++			GL20.glAttachShader(SHADER, f);
++			GL20.glAttachShader(SHADER, v);
++			GL20.glLinkProgram(SHADER);
++			if (GL20.glGetProgrami(SHADER, GL20.GL_LINK_STATUS) == 0) {
++				String log = GL20.glGetProgramInfoLog(SHADER, 1000);
++				System.err.println("Program failure\n" + log);
++			}
++
++			GL20.glDeleteShader(f);
++			GL20.glDeleteShader(v);
++			GL20.glUseProgram(SHADER);
++
++			GL20.glUniform1i(GL20.glGetUniformLocation(SHADER, "screen"), 0);
++			GL20.glUseProgram(0);
++			SHADER_WIDTH = GL20.glGetUniformLocation(SHADER, "width");
++			SHADER_HEIGHT = GL20.glGetUniformLocation(SHADER, "height");
++			SHADER_SCALED_WIDTH = GL20.glGetUniformLocation(SHADER, "scaledWidth");
++			SHADER_SCALED_HEIGHT = GL20.glGetUniformLocation(SHADER, "scaledHeight");
++		}
++	}
++
++	public static void startFB() {
++		if (!enabled || !GL30_SUPPORTED) return;
++		FRAMEBUFFER.use();
++		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
++	}
++
++	public static void stopFB() {
++		if (!enabled || !GL30_SUPPORTED) return;
++		Framebuffer.stop();
++	}
++
++	public static void resizeFB(int width, int height) {
++		FRAMEBUFFER.resize(width, height);
++	}
++
++	public static void apply(GameSettings settings, int width, int height) {
++		if (!enabled || !GL30_SUPPORTED) return;
++
++		ScaledResolution resolution = new ScaledResolution(settings, width, height);
++
++		GL20.glUseProgram(SHADER);
++		GL20.glUniform1i(SHADER_WIDTH, width);
++		GL20.glUniform1i(SHADER_HEIGHT, height);
++		GL20.glUniform1f(SHADER_SCALED_WIDTH, (float)resolution.scaledWidthD);
++		GL20.glUniform1f(SHADER_SCALED_HEIGHT, (float)resolution.scaledHeightD);
++
++		Tessellator t = Tessellator.instance;
++		GL11.glDisable(GL11.GL_DEPTH_TEST);
++		GL11.glBindTexture(GL11.GL_TEXTURE_2D, FRAMEBUFFER.getTexture());
++		t.startDrawingQuads();
++		t.addVertexWithUV(0, 0, 0, 0, 1);
++		t.addVertexWithUV(0, resolution.getScaledHeight(), 0, 0, 0);
++		t.addVertexWithUV(resolution.getScaledWidth(), resolution.getScaledHeight(), 0, 1, 0);
++		t.addVertexWithUV(resolution.getScaledWidth(), 0, 0, 1, 1);
++		t.draw();
++		GL20.glUseProgram(0);
++		GL11.glEnable(GL11.GL_DEPTH_TEST);
++	}
++}
 --- net/minecraft/src/GuiMainMenu.java
 +++ net/minecraft/src/GuiMainMenu.java
 @@ -2,6 +2,7 @@
@@ -2539,6 +2666,71 @@
  		this.field_35403_b.addBox(0.0F, 0.0F, 0.0F, 30, 10, 14, 0.0F);
  		this.field_35403_b.rotationPointX = 1.0F;
  		this.field_35403_b.rotationPointY = 6.0F;
+--- /dev/null
++++ net/minecraft/src/Framebuffer.java
+@@ -1,0 +1,62 @@
++package net.minecraft.src;
++
++import org.lwjgl.BufferUtils;
++
++import static org.lwjgl.opengl.GL11.*;
++import static org.lwjgl.opengl.GL30.*;
++
++public class Framebuffer {
++	private final int handle;
++	private final int colorTexture, depthTexture;
++	private int width, height;
++
++	public Framebuffer(int width, int height) {
++		handle = glGenFramebuffers();
++		colorTexture = glGenTextures();
++		depthTexture = glGenTextures();
++		resize(width, height);
++
++		use();
++		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
++		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
++		int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
++		if (status != GL_FRAMEBUFFER_COMPLETE) {
++			System.err.println("Incomplete framebuffer " + handle + ": " + status);
++		}
++		stop();
++	}
++
++	public void resize(int width, int height) {
++		if (width != this.width || height != this.height) {
++			this.width = width;
++			this.height = height;
++
++			glBindTexture(GL_TEXTURE_2D, colorTexture);
++			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, BufferUtils.createByteBuffer(width * height * 3));
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
++			glBindTexture(GL_TEXTURE_2D, depthTexture);
++			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, BufferUtils.createByteBuffer(width * height));
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
++			glBindTexture(GL_TEXTURE_2D, 0);
++		}
++	}
++
++	public void use() {
++		glBindFramebuffer(GL_FRAMEBUFFER, handle);
++	}
++
++	public static void stop() {
++		glBindFramebuffer(GL_FRAMEBUFFER, 0);
++	}
++
++	public int getTexture() {
++		return colorTexture;
++	}
++
++	public void unload() {
++		glDeleteFramebuffers(handle);
++		glDeleteTextures(colorTexture);
++	}
++}
 --- net/minecraft/src/SaveHandler.java
 +++ net/minecraft/src/SaveHandler.java
 @@ -13,29 +13,31 @@
@@ -5157,7 +5349,7 @@
 +	public static final String B18X_VERSION = "v1.1";
 +
 +	public static final boolean DEMO_MODE = false;
-+	public static final boolean DEBUG_MODE = true;
++	public static final boolean DEBUG_MODE = false;
 +	private static final byte LATEST_SAVE_VERSION = 3;
 +	// 0: v1.0
 +	// 1: v1.0.1
@@ -22464,7 +22656,15 @@
  		this.renderEngine.registerTextureFX(new TextureWatchFX(this));
  		this.renderEngine.registerTextureFX(new TextureWaterFlowFX());
  		this.renderEngine.registerTextureFX(new TextureLavaFlowFX());
-@@ -299,10 +217,11 @@
+@@ -289,6 +207,7 @@
+ 		this.renderEngine.registerTextureFX(new TextureFlamesFX(1));
+ 		this.renderGlobal = new RenderGlobal(this, this.renderEngine);
+ 		GL11.glViewport(0, 0, this.displayWidth, this.displayHeight);
++		PixelationFilter.resizeFB(this.displayWidth, this.displayHeight);
+ 		this.effectRenderer = new EffectRenderer(this.theWorld, this.renderEngine);
+ 
+ 		try {
+@@ -299,10 +218,11 @@
  
  		this.checkGLError("Post startup");
  		this.ingameGUI = new GuiIngame(this);
@@ -22477,7 +22677,7 @@
  		}
  
  		this.loadingScreen = new LoadingScreenRenderer(this);
-@@ -451,6 +370,16 @@
+@@ -451,6 +371,16 @@
  
  	public void shutdownMinecraftApplet() {
  		try {
@@ -22494,7 +22694,7 @@
  			this.statFileWriter.func_27175_b();
  			this.statFileWriter.syncStats();
  			if(this.mcApplet != null) {
-@@ -517,7 +446,7 @@
+@@ -517,7 +447,7 @@
  						this.shutdown();
  					}
  
@@ -22503,7 +22703,7 @@
  						float var4 = this.timer.renderPartialTicks;
  						this.timer.updateTimer();
  						this.timer.renderPartialTicks = var4;
-@@ -541,7 +470,11 @@
+@@ -541,7 +471,11 @@
  
  					long var24 = System.nanoTime() - var23;
  					this.checkGLError("Pre render");
@@ -22516,7 +22716,30 @@
  					this.sndManager.func_338_a(this.thePlayer, this.timer.renderPartialTicks);
  					GL11.glEnable(GL11.GL_TEXTURE_2D);
  					if(this.theWorld != null) {
-@@ -758,7 +691,7 @@
+@@ -561,6 +495,7 @@
+ 							this.playerController.setPartialTime(this.timer.renderPartialTicks);
+ 						}
+ 
++						PixelationFilter.startFB();
+ 						this.entityRenderer.updateCameraAndRender(this.timer.renderPartialTicks);
+ 					}
+ 
+@@ -575,11 +510,14 @@
+ 					}
+ 
+ 					this.guiAchievement.updateAchievementWindow();
++					PixelationFilter.stopFB();
+ 					Thread.yield();
+ 					if(Keyboard.isKeyDown(Keyboard.KEY_F7)) {
+ 						Display.update();
+ 					}
+ 
++					if(!this.skipRenderWorld) PixelationFilter.apply(this.gameSettings, this.displayWidth, this.displayHeight);
++
+ 					this.screenshotListener();
+ 					if(this.mcCanvas != null && !this.fullscreen && (this.mcCanvas.getWidth() != this.displayWidth || this.mcCanvas.getHeight() != this.displayHeight)) {
+ 						this.displayWidth = this.mcCanvas.getWidth();
+@@ -758,7 +696,7 @@
  	}
  
  	public void displayInGameMenu() {
@@ -22525,7 +22748,15 @@
  			this.displayGuiScreen(new GuiIngameMenu());
  		}
  	}
-@@ -914,6 +847,8 @@
+@@ -906,6 +844,7 @@
+ 			int var5 = var3.getScaledHeight();
+ 			this.currentScreen.setWorldAndResolution(this, var4, var5);
+ 		}
++		PixelationFilter.resizeFB(var1, var2);
+ 
+ 	}
+ 
+@@ -914,6 +853,8 @@
  	}
  
  	public void runTick() {
@@ -22534,7 +22765,7 @@
  		if(this.field_35001_ab > 0) {
  			--this.field_35001_ab;
  		}
-@@ -966,6 +901,7 @@
+@@ -966,6 +907,7 @@
  				this.currentScreen.updateScreen();
  			}
  		}
@@ -22542,7 +22773,7 @@
  
  		if(this.currentScreen == null || this.currentScreen.allowUserInput) {
  			while(Mouse.next()) {
-@@ -1011,7 +947,7 @@
+@@ -1011,7 +953,7 @@
  				while(true) {
  					do {
  						if(!Keyboard.next()) {
@@ -22551,7 +22782,7 @@
  								this.displayGuiScreen(new GuiInventory(this.thePlayer));
  							}
  
-@@ -1070,7 +1006,7 @@
+@@ -1070,7 +1012,7 @@
  							}
  
  							if(Keyboard.getEventKey() == Keyboard.KEY_F && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
@@ -22560,7 +22791,7 @@
  								this.gameSettings.setOptionValue(EnumOptions.RENDER_DISTANCE, var6 ? -1 : 1);
  							}
  
-@@ -1083,7 +1019,80 @@
+@@ -1083,7 +1025,80 @@
  							}
  
  							if(Keyboard.getEventKey() == Keyboard.KEY_F5) {
@@ -22642,7 +22873,7 @@
  							}
  						}
  
-@@ -1130,6 +1139,7 @@
+@@ -1130,6 +1145,7 @@
  			if(!this.isGamePaused || this.isMultiplayerWorld()) {
  				this.theWorld.setAllowedMobSpawns(this.gameSettings.difficulty > 0, true);
  				this.theWorld.tick();
@@ -22650,7 +22881,7 @@
  			}
  
  			if(!this.isGamePaused && this.theWorld != null) {
-@@ -1177,6 +1187,24 @@
+@@ -1177,6 +1193,24 @@
  				this.statFileWriter.readStat(StatList.loadWorldStat, 1);
  				this.statFileWriter.readStat(StatList.startGameStat, 1);
  				this.changeWorld2(var5, "Loading level");
@@ -22675,7 +22906,7 @@
  			}
  		}
  
-@@ -1229,6 +1257,271 @@
+@@ -1229,6 +1263,271 @@
  
  	}
  
@@ -22791,11 +23022,11 @@
 +			return;
 +		}
 +
-+//		if (Personalization.controlPanelUnlocked || this.playerController instanceof PlayerControllerTest) {
-+//			this.thePlayer.angeredNotch = false;
-+//			this.respawn(true, 0, true);
-+//			return;
-+//		}
++		if (Personalization.controlPanelUnlocked || this.playerController instanceof PlayerControllerTest) {
++			this.thePlayer.angeredNotch = false;
++			this.respawn(true, 0, true);
++			return;
++		}
 +
 +		System.out.println("Toggling dimension!!");
 +		this.thePlayer.dimension = 3;
@@ -22947,7 +23178,15 @@
  	public void changeWorld1(World var1) {
  		this.changeWorld2(var1, "");
  	}
-@@ -1268,7 +1561,7 @@
+@@ -1238,6 +1537,7 @@
+ 	}
+ 
+ 	public void changeWorld(World var1, String var2, EntityPlayer var3) {
++		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+ 		this.statFileWriter.func_27175_b();
+ 		this.statFileWriter.syncStats();
+ 		this.renderViewEntity = null;
+@@ -1268,7 +1568,7 @@
  				}
  			}
  
@@ -22956,7 +23195,7 @@
  				this.preloadWorld(var2);
  			}
  
-@@ -1306,6 +1599,14 @@
+@@ -1306,6 +1606,14 @@
  			}
  
  			this.renderViewEntity = this.thePlayer;
@@ -22971,7 +23210,7 @@
  		} else {
  			this.thePlayer = null;
  		}
-@@ -1315,7 +1616,7 @@
+@@ -1315,7 +1623,7 @@
  	}
  
  	private void convertMapFormat(String var1, String var2) {
@@ -22980,7 +23219,7 @@
  		this.loadingScreen.displayLoadingString("This may take a while :)");
  		this.saveLoader.convertMapFormat(var1, this.loadingScreen);
  		this.startWorld(var1, var2, new WorldSettings(0L, 0, true));
-@@ -1411,8 +1712,22 @@
+@@ -1411,8 +1719,22 @@
  	}
  
  	public void respawn(boolean var1, int var2) {
@@ -23005,7 +23244,7 @@
  		}
  
  		ChunkCoordinates var3 = null;
-@@ -1447,8 +1762,13 @@
+@@ -1447,8 +1769,13 @@
  			this.theWorld.setEntityDead(this.thePlayer);
  		}
  
@@ -23019,7 +23258,7 @@
  		this.thePlayer.dimension = var2;
  		this.renderViewEntity = this.thePlayer;
  		this.thePlayer.preparePlayerToSpawn();
-@@ -1532,11 +1852,15 @@
+@@ -1532,11 +1859,15 @@
  	}
  
  	public static boolean isAmbientOcclusionEnabled() {
