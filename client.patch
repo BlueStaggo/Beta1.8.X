@@ -5157,7 +5157,7 @@
 +	public static final String B18X_VERSION = "v1.1";
 +
 +	public static final boolean DEMO_MODE = false;
-+	public static final boolean DEBUG_MODE = false;
++	public static final boolean DEBUG_MODE = true;
 +	private static final byte LATEST_SAVE_VERSION = 3;
 +	// 0: v1.0
 +	// 1: v1.0.1
@@ -16751,7 +16751,7 @@
  			}
  
 -			this.func_35463_p(var3 + this.rand.nextInt(16), this.rand.nextInt(128), var4 + this.rand.nextInt(16));
-+			this.func_35463_p(var3 + this.rand.nextInt(16), this.rand.nextInt(var15.getMaxHeight()), var4 + this.rand.nextInt(16));
++			this.func_35463_p(var3 + this.rand.nextInt(16), this.rand.nextInt(Math.max(var15.getMaxHeight(), 1)), var4 + this.rand.nextInt(16));
  
 -			for(var6 = 0; var6 < 80; ++var6) {
 -				this.updateLCG = this.updateLCG * 3 + 1013904223;
@@ -20940,7 +20940,7 @@
 +
 +		for(int var6 = 0; var6 < 16; ++var6) {
 +			for(int var7 = 0; var7 < 16; ++var7) {
-+				for(int var8 = 0; var8 < var5; ++var8) {
++				for(int var8 = var5 - 1; var8 >= 0; --var8) {
 +					int offset = var6 * 16 * height + var7 * height + var8;
 +					byte var9 = var2[offset];
 +					if(var9 != 0) {
