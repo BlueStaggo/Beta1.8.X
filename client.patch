@@ -365,6 +365,26 @@
  
  		return false;
 --- /dev/null
++++ net/minecraft/src/BiomeGenSnow.java
+@@ -1,0 +1,17 @@
++package net.minecraft.src;
++
++public class BiomeGenSnow extends BiomeGenBase {
++	protected BiomeGenSnow(int var1) {
++		super(var1);
++	}
++
++	@Override
++	public float getMinHeight(int x, int z) {
++		return doHills(x, z) ? 0.2F : super.getMinHeight(x, z);
++	}
++
++	@Override
++	public float getMaxHeight(int x, int z) {
++		return doHills(x, z) ? 1.2F : super.getMaxHeight(x, z);
++	}
++}
+--- /dev/null
 +++ net/minecraft/src/B18XGameMode.java
 @@ -1,0 +1,79 @@
 +package net.minecraft.src;
@@ -444,26 +464,6 @@
 +		factor = MathHelper.clamp(((factor - 1.0D + 2.0D * islandDistance) / (2.0D * islandFalloff) + 1.0D) / 2.0D, 0.0D, 1.0D);
 +//		factor = MathHelper.squareInOut(factor);
 +		return factor;
-+	}
-+}
---- /dev/null
-+++ net/minecraft/src/BiomeGenSnow.java
-@@ -1,0 +1,17 @@
-+package net.minecraft.src;
-+
-+public class BiomeGenSnow extends BiomeGenBase {
-+	protected BiomeGenSnow(int var1) {
-+		super(var1);
-+	}
-+
-+	@Override
-+	public float getMinHeight(int x, int z) {
-+		return doHills(x, z) ? 0.2F : super.getMinHeight(x, z);
-+	}
-+
-+	@Override
-+	public float getMaxHeight(int x, int z) {
-+		return doHills(x, z) ? 1.2F : super.getMaxHeight(x, z);
 +	}
 +}
 --- /dev/null
@@ -1078,19 +1078,6 @@
 +		return (float)var1;
 +	}
 +}
---- net/minecraft/src/ClippingHelperImpl.java
-+++ net/minecraft/src/ClippingHelperImpl.java
-@@ -14,8 +14,8 @@
- 		return instance;
- 	}
- 
--	private void normalize(float[][] var1, int var2) {
--		float var3 = MathHelper.sqrt_float(var1[var2][0] * var1[var2][0] + var1[var2][1] * var1[var2][1] + var1[var2][2] * var1[var2][2]);
-+	private void normalize(double[][] var1, int var2) {
-+		double var3 = Math.sqrt(var1[var2][0] * var1[var2][0] + var1[var2][1] * var1[var2][1] + var1[var2][2] * var1[var2][2]);
- 		var1[var2][0] /= var3;
- 		var1[var2][1] /= var3;
- 		var1[var2][2] /= var3;
 --- net/minecraft/src/GuiInventory.java
 +++ net/minecraft/src/GuiInventory.java
 @@ -14,18 +14,24 @@
@@ -1190,6 +1177,30 @@
 +		}
  	}
  }
+--- net/minecraft/src/ClippingHelperImpl.java
++++ net/minecraft/src/ClippingHelperImpl.java
+@@ -14,8 +14,8 @@
+ 		return instance;
+ 	}
+ 
+-	private void normalize(float[][] var1, int var2) {
+-		float var3 = MathHelper.sqrt_float(var1[var2][0] * var1[var2][0] + var1[var2][1] * var1[var2][1] + var1[var2][2] * var1[var2][2]);
++	private void normalize(double[][] var1, int var2) {
++		double var3 = Math.sqrt(var1[var2][0] * var1[var2][0] + var1[var2][1] * var1[var2][1] + var1[var2][2] * var1[var2][2]);
+ 		var1[var2][0] /= var3;
+ 		var1[var2][1] /= var3;
+ 		var1[var2][2] /= var3;
+--- net/minecraft/src/ISaveHandler.java
++++ net/minecraft/src/ISaveHandler.java
+@@ -14,5 +14,7 @@
+ 
+ 	void saveWorldInfo(WorldInfo var1);
+ 
+-	File func_28113_a(String var1);
++	File getMapFileFromName(String var1);
++
++	String getSaveDirectoryName();
+ }
 --- net/minecraft/src/GenLayerRiverMix.java
 +++ net/minecraft/src/GenLayerRiverMix.java
 @@ -1,31 +1,34 @@
@@ -1233,17 +1244,6 @@
  			}
  		}
  
---- net/minecraft/src/ISaveHandler.java
-+++ net/minecraft/src/ISaveHandler.java
-@@ -14,5 +14,7 @@
- 
- 	void saveWorldInfo(WorldInfo var1);
- 
--	File func_28113_a(String var1);
-+	File getMapFileFromName(String var1);
-+
-+	String getSaveDirectoryName();
- }
 --- net/minecraft/src/WorldGenDungeons.java
 +++ net/minecraft/src/WorldGenDungeons.java
 @@ -101,7 +101,9 @@
@@ -1403,7 +1403,34 @@
  import java.io.InputStreamReader;
  import java.nio.charset.Charset;
  import java.util.ArrayList;
-@@ -57,7 +58,8 @@
+@@ -18,6 +19,8 @@
+ 	private GuiButton multiplayerButton;
+ 	private int field_35357_f = 0;
+ 	private int field_35358_g;
++    private int funnyImage;
++	private int funnyTick;
+ 
+ 	public GuiMainMenu() {
+ 		try {
+@@ -47,6 +50,9 @@
+ 	public void updateScreen() {
+ 		++this.updateCounter;
+ 		++this.field_35357_f;
++        if (this.funnyTick > 0) {
++			this.funnyTick--;
++		}
+ 	}
+ 
+ 	public boolean doesGuiPauseGame() {
+@@ -54,10 +60,16 @@
+ 	}
+ 
+ 	protected void keyTyped(char var1, int var2) {
++        if (var1 == 'f') {
++			this.game.sndManager.playSoundFX("random.funny", 1.0F, 1.0F);
++			this.funnyImage = rand.nextInt(21);
++			this.funnyTick = 20;
++		}
  	}
  
  	public void initGui() {
@@ -1413,7 +1440,7 @@
  		Calendar var1 = Calendar.getInstance();
  		var1.setTime(new Date());
  		if(var1.get(2) + 1 == 11 && var1.get(5) == 9) {
-@@ -72,17 +74,24 @@
+@@ -72,17 +84,24 @@
  
  		StringTranslate var2 = StringTranslate.getInstance();
  		int var4 = this.height / 4 + 48;
@@ -1443,7 +1470,7 @@
  			this.multiplayerButton.enabled = false;
  		}
  
-@@ -90,23 +99,58 @@
+@@ -90,23 +109,58 @@
  
  	protected void actionPerformed(GuiButton var1) {
  		if(var1.id == 0) {
@@ -1507,7 +1534,7 @@
  		}
  
  	}
-@@ -160,7 +204,7 @@
+@@ -160,7 +214,7 @@
  					GL11.glRotatef(-90.0F, 1.0F, 0.0F, 0.0F);
  				}
  
@@ -1516,7 +1543,7 @@
  				var4.startDrawingQuads();
  				var4.setColorRGBA_I(16777215, 255 / (var6 + 1));
  				float var11 = 0.0F;
-@@ -224,7 +268,7 @@
+@@ -224,7 +278,7 @@
  		this.func_35354_a(var3);
  		this.func_35354_a(var3);
  		this.func_35354_a(var3);
@@ -1525,7 +1552,7 @@
  		Tessellator var4 = Tessellator.instance;
  		var4.startDrawingQuads();
  		float var5 = this.width > this.height ? 120.0F / (float)this.width : 120.0F / (float)this.height;
-@@ -243,14 +287,20 @@
+@@ -243,14 +297,20 @@
  	}
  
  	public void drawScreen(int var1, int var2, float var3) {
@@ -1550,7 +1577,7 @@
  		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
  		this.drawTexturedModalRect(var6 + 0, var7 + 0, 0, 0, 155, 44);
  		this.drawTexturedModalRect(var6 + 155, var7 + 0, 0, 45, 155, 44);
-@@ -263,9 +313,26 @@
+@@ -263,9 +323,44 @@
  		GL11.glScalef(var8, var8, var8);
  		this.drawCenteredString(this.fontRenderer, this.splashText, 0, -8, 16776960);
  		GL11.glPopMatrix();
@@ -1563,6 +1590,24 @@
  		String var9 = "Copyright Mojang AB. Do not distribute!";
  		this.drawString(this.fontRenderer, var9, this.width - this.fontRenderer.getStringWidth(var9) - 2, this.height - 10, 16777215);
  		super.drawScreen(var1, var2, var3);
++
++        if (this.funnyTick > 0) {
++			float a = (this.funnyTick - var3) / 20.0F;
++			GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.game.renderEngine.getTexture("/gui/funny/img" + this.funnyImage + ".jpg"));
++			GL11.glEnable(GL11.GL_BLEND);
++			GL11.glDisable(GL11.GL_ALPHA_TEST);
++			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
++			GL11.glColor4f(1.0F, 1.0F, 1.0F, a);
++			Tessellator var10 = Tessellator.instance;
++			var10.startDrawingQuads();
++			var10.addVertexWithUV(0, this.height, 0, 0, 1);
++			var10.addVertexWithUV(this.width, this.height, 0, 1, 1);
++			var10.addVertexWithUV(this.width, 0, 0, 1, 0);
++			var10.addVertexWithUV(0, 0, 0, 0, 0);
++			var10.draw();
++			GL11.glDisable(GL11.GL_BLEND);
++			GL11.glEnable(GL11.GL_ALPHA_TEST);
++		}
 +	}
 +
 +	protected void mouseClicked(int var1, int var2, int var3) {
@@ -1910,37 +1955,6 @@
 +	}
 +}
 --- /dev/null
-+++ net/minecraft/src/BiomeGenSavanna.java
-@@ -1,0 +1,28 @@
-+package net.minecraft.src;
-+
-+import java.util.Random;
-+
-+public class BiomeGenSavanna extends BiomeGenBase {
-+	private final WorldGenerator savannaTree = new WorldGenSavannaTree();
-+
-+	protected BiomeGenSavanna(int var1) {
-+		super(var1);
-+		this.decorator.trees = 1;
-+		this.decorator.flowers = 4;
-+		this.decorator.grass = 20;
-+	}
-+
-+	public WorldGenerator getRandomWorldGenForTrees(Random var1) {
-+		return Personalization.oakOnly ? super.getRandomWorldGenForTrees(var1)
-+				: var1.nextInt(5) > 0 ? this.savannaTree
-+				: this.field_35493_z;
-+	}
-+
-+	public float getMinHeight(int x, int z) {
-+		return super.getMinHeight(x, z) + (doHills(x, z) ? 1.4F : 0.0F);
-+	}
-+
-+	public float getMaxHeight(int x, int z) {
-+		return super.getMaxHeight(x, z) / (doHills(x, z) ? 2.0F : 1.0F);
-+	}
-+}
---- /dev/null
 +++ net/minecraft/src/TileEntityComputerRenderer.java
 @@ -1,0 +1,47 @@
 +package net.minecraft.src;
@@ -1988,6 +2002,37 @@
 +
 +	public void renderTileEntityAt(TileEntity var1, double var2, double var4, double var6, float var8) {
 +		this.renderComputerScreen((TileEntityComputer)var1, var2, var4, var6);
++	}
++}
+--- /dev/null
++++ net/minecraft/src/BiomeGenSavanna.java
+@@ -1,0 +1,28 @@
++package net.minecraft.src;
++
++import java.util.Random;
++
++public class BiomeGenSavanna extends BiomeGenBase {
++	private final WorldGenerator savannaTree = new WorldGenSavannaTree();
++
++	protected BiomeGenSavanna(int var1) {
++		super(var1);
++		this.decorator.trees = 1;
++		this.decorator.flowers = 4;
++		this.decorator.grass = 20;
++	}
++
++	public WorldGenerator getRandomWorldGenForTrees(Random var1) {
++		return Personalization.oakOnly ? super.getRandomWorldGenForTrees(var1)
++				: var1.nextInt(5) > 0 ? this.savannaTree
++				: this.field_35493_z;
++	}
++
++	public float getMinHeight(int x, int z) {
++		return super.getMinHeight(x, z) + (doHills(x, z) ? 1.4F : 0.0F);
++	}
++
++	public float getMaxHeight(int x, int z) {
++		return super.getMaxHeight(x, z) / (doHills(x, z) ? 2.0F : 1.0F);
 +	}
 +}
 --- net/minecraft/src/IWorldAccess.java
@@ -2388,6 +2433,42 @@
 +		}
  	}
  }
+--- net/minecraft/src/RenderEnderman.java
++++ net/minecraft/src/RenderEnderman.java
+@@ -19,7 +19,7 @@
+ 		this.field_35444_c.field_35407_a = var1.func_35176_r() > 0;
+ 		this.field_35444_c.field_35406_b = var1.field_35187_a;
+ 		if(var1.field_35187_a) {
+-			double var10 = 0.02D;
++			double var10 = Personalization.redEnderman ? 0.05D : 0.02D;
+ 			var2 += this.field_35445_h.nextGaussian() * var10;
+ 			var6 += this.field_35445_h.nextGaussian() * var10;
+ 		}
+@@ -45,7 +45,7 @@
+ 			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+ 			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+ 			this.loadTexture("/terrain.png");
+-			this.renderBlocks.renderBlockOnInventory(Block.blocksList[var1.func_35176_r()], var1.func_35180_s(), 1.0F);
++			this.renderBlockies.renderBlockOnInventory(Block.blocksList[var1.func_35176_r()], var1.func_35180_s(), 1.0F);
+ 			GL11.glPopMatrix();
+ 			GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+ 		}
+@@ -53,10 +53,13 @@
+ 	}
+ 
+ 	protected boolean func_35441_a(EntityEnderman var1, int var2, float var3) {
+-		if(var2 != 0) {
++		if(var2 != 0 || Personalization.whiteEnderman) {
+ 			return false;
+ 		} else {
+-			this.loadTexture("/mob/enderman_eyes.png");
++			this.loadTexture("/mob/enderman" +
++					(Personalization.redEnderman ? "_red_"
++					: Personalization.greenEnderman ? "_green_"
++					: "_") + "eyes.png");
+ 			float var4 = 1.0F;
+ 			GL11.glEnable(GL11.GL_BLEND);
+ 			GL11.glDisable(GL11.GL_ALPHA_TEST);
 --- net/minecraft/src/MathHelper.java
 +++ net/minecraft/src/MathHelper.java
 @@ -36,6 +36,14 @@
@@ -2449,42 +2530,6 @@
  
  	static {
  		for(int var0 = 0; var0 < 65536; ++var0) {
---- net/minecraft/src/RenderEnderman.java
-+++ net/minecraft/src/RenderEnderman.java
-@@ -19,7 +19,7 @@
- 		this.field_35444_c.field_35407_a = var1.func_35176_r() > 0;
- 		this.field_35444_c.field_35406_b = var1.field_35187_a;
- 		if(var1.field_35187_a) {
--			double var10 = 0.02D;
-+			double var10 = Personalization.redEnderman ? 0.05D : 0.02D;
- 			var2 += this.field_35445_h.nextGaussian() * var10;
- 			var6 += this.field_35445_h.nextGaussian() * var10;
- 		}
-@@ -45,7 +45,7 @@
- 			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
- 			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
- 			this.loadTexture("/terrain.png");
--			this.renderBlocks.renderBlockOnInventory(Block.blocksList[var1.func_35176_r()], var1.func_35180_s(), 1.0F);
-+			this.renderBlockies.renderBlockOnInventory(Block.blocksList[var1.func_35176_r()], var1.func_35180_s(), 1.0F);
- 			GL11.glPopMatrix();
- 			GL11.glDisable(GL12.GL_RESCALE_NORMAL);
- 		}
-@@ -53,10 +53,13 @@
- 	}
- 
- 	protected boolean func_35441_a(EntityEnderman var1, int var2, float var3) {
--		if(var2 != 0) {
-+		if(var2 != 0 || Personalization.whiteEnderman) {
- 			return false;
- 		} else {
--			this.loadTexture("/mob/enderman_eyes.png");
-+			this.loadTexture("/mob/enderman" +
-+					(Personalization.redEnderman ? "_red_"
-+					: Personalization.greenEnderman ? "_green_"
-+					: "_") + "eyes.png");
- 			float var4 = 1.0F;
- 			GL11.glEnable(GL11.GL_BLEND);
- 			GL11.glDisable(GL11.GL_ALPHA_TEST);
 --- /dev/null
 +++ net/minecraft/src/BlockComputer.java
 @@ -1,0 +1,45 @@
@@ -2557,6 +2602,29 @@
 +		return super.getMaxHeight(x, z) + (doHills(x, z) ? 0.5F : 0.0F);
  	}
  }
+--- net/minecraft/src/ModelLargeChest.java
++++ net/minecraft/src/ModelLargeChest.java
+@@ -2,17 +2,17 @@
+ 
+ public class ModelLargeChest extends ModelChest {
+ 	public ModelLargeChest() {
+-		this.field_35405_a = (new ModelRenderer(this, 0, 0)).func_35968_a(128, 64);
++		this.field_35405_a = (new ModelRenderer(this, 0, 0)).setTextureSize(128, 64);
+ 		this.field_35405_a.addBox(0.0F, -5.0F, -14.0F, 30, 5, 14, 0.0F);
+ 		this.field_35405_a.rotationPointX = 1.0F;
+ 		this.field_35405_a.rotationPointY = 7.0F;
+ 		this.field_35405_a.rotationPointZ = 15.0F;
+-		this.field_35404_c = (new ModelRenderer(this, 0, 0)).func_35968_a(128, 64);
++		this.field_35404_c = (new ModelRenderer(this, 0, 0)).setTextureSize(128, 64);
+ 		this.field_35404_c.addBox(-1.0F, -2.0F, -15.0F, 2, 4, 1, 0.0F);
+ 		this.field_35404_c.rotationPointX = 16.0F;
+ 		this.field_35404_c.rotationPointY = 7.0F;
+ 		this.field_35404_c.rotationPointZ = 15.0F;
+-		this.field_35403_b = (new ModelRenderer(this, 0, 19)).func_35968_a(128, 64);
++		this.field_35403_b = (new ModelRenderer(this, 0, 19)).setTextureSize(128, 64);
+ 		this.field_35403_b.addBox(0.0F, 0.0F, 0.0F, 30, 10, 14, 0.0F);
+ 		this.field_35403_b.rotationPointX = 1.0F;
+ 		this.field_35403_b.rotationPointY = 6.0F;
 --- net/minecraft/src/EntityMob.java
 +++ net/minecraft/src/EntityMob.java
 @@ -2,13 +2,18 @@
@@ -2643,29 +2711,6 @@
 +		return false;
  	}
  }
---- net/minecraft/src/ModelLargeChest.java
-+++ net/minecraft/src/ModelLargeChest.java
-@@ -2,17 +2,17 @@
- 
- public class ModelLargeChest extends ModelChest {
- 	public ModelLargeChest() {
--		this.field_35405_a = (new ModelRenderer(this, 0, 0)).func_35968_a(128, 64);
-+		this.field_35405_a = (new ModelRenderer(this, 0, 0)).setTextureSize(128, 64);
- 		this.field_35405_a.addBox(0.0F, -5.0F, -14.0F, 30, 5, 14, 0.0F);
- 		this.field_35405_a.rotationPointX = 1.0F;
- 		this.field_35405_a.rotationPointY = 7.0F;
- 		this.field_35405_a.rotationPointZ = 15.0F;
--		this.field_35404_c = (new ModelRenderer(this, 0, 0)).func_35968_a(128, 64);
-+		this.field_35404_c = (new ModelRenderer(this, 0, 0)).setTextureSize(128, 64);
- 		this.field_35404_c.addBox(-1.0F, -2.0F, -15.0F, 2, 4, 1, 0.0F);
- 		this.field_35404_c.rotationPointX = 16.0F;
- 		this.field_35404_c.rotationPointY = 7.0F;
- 		this.field_35404_c.rotationPointZ = 15.0F;
--		this.field_35403_b = (new ModelRenderer(this, 0, 19)).func_35968_a(128, 64);
-+		this.field_35403_b = (new ModelRenderer(this, 0, 19)).setTextureSize(128, 64);
- 		this.field_35403_b.addBox(0.0F, 0.0F, 0.0F, 30, 10, 14, 0.0F);
- 		this.field_35403_b.rotationPointX = 1.0F;
- 		this.field_35403_b.rotationPointY = 6.0F;
 --- /dev/null
 +++ net/minecraft/src/Framebuffer.java
 @@ -1,0 +1,62 @@
@@ -3512,30 +3557,6 @@
 +	public void handleKeyboardInput() {
 +	}
 +}
---- net/minecraft/src/BlockDirt.java
-+++ net/minecraft/src/BlockDirt.java
-@@ -4,4 +4,21 @@
- 	protected BlockDirt(int var1, int var2) {
- 		super(var1, var2, Material.ground);
- 	}
-+
-+	public int getBlockTextureFromSideAndMetadata(int var1, int var2) {
-+		return var2 == 1 ? 187
-+				: var2 == 2 ? var1 == 1 ? 155 : var1 != 0 ? 171 : 2
-+				: this.blockIndexInTexture;
-+	}
-+
-+	public int getBlockTexture(IBlockAccess var1, int var2, int var3, int var4, int var5) {
-+		int texture = super.getBlockTexture(var1, var2, var3, var4, var5);
-+		if (texture == 171) {
-+			Material var6 = var1.getBlockMaterial(var2, var3 + 1, var4);
-+			if (var6 == Material.snow || var6 == Material.craftedSnow) {
-+				texture = 68;
-+			}
-+		}
-+		return texture;
-+	}
- }
 --- net/minecraft/src/ModelChest.java
 +++ net/minecraft/src/ModelChest.java
 @@ -1,7 +1,7 @@
@@ -3562,6 +3583,30 @@
  		this.field_35403_b.addBox(0.0F, 0.0F, 0.0F, 14, 10, 14, 0.0F);
  		this.field_35403_b.rotationPointX = 1.0F;
  		this.field_35403_b.rotationPointY = 6.0F;
+--- net/minecraft/src/BlockDirt.java
++++ net/minecraft/src/BlockDirt.java
+@@ -4,4 +4,21 @@
+ 	protected BlockDirt(int var1, int var2) {
+ 		super(var1, var2, Material.ground);
+ 	}
++
++	public int getBlockTextureFromSideAndMetadata(int var1, int var2) {
++		return var2 == 1 ? 187
++				: var2 == 2 ? var1 == 1 ? 155 : var1 != 0 ? 171 : 2
++				: this.blockIndexInTexture;
++	}
++
++	public int getBlockTexture(IBlockAccess var1, int var2, int var3, int var4, int var5) {
++		int texture = super.getBlockTexture(var1, var2, var3, var4, var5);
++		if (texture == 171) {
++			Material var6 = var1.getBlockMaterial(var2, var3 + 1, var4);
++			if (var6 == Material.snow || var6 == Material.craftedSnow) {
++				texture = 68;
++			}
++		}
++		return texture;
++	}
+ }
 --- net/minecraft/src/BlockPortal.java
 +++ net/minecraft/src/BlockPortal.java
 @@ -14,7 +14,11 @@
@@ -5346,7 +5391,7 @@
 +import static net.minecraft.src.BiomeGenBase.*;
 +
 +public final class Personalization {
-+	public static final String B18X_VERSION = "v1.1";
++	public static final String B18X_VERSION = "v1.1.1";
 +
 +	public static final boolean DEMO_MODE = false;
 +	public static final boolean DEBUG_MODE = false;
@@ -8142,82 +8187,6 @@
  			for(int var6 = 0; var6 < var5.getSizeInventory(); ++var6) {
  				ItemStack var7 = var5.getStackInSlot(var6);
  				if(var7 != null) {
---- net/minecraft/src/ThreadDownloadResources.java
-+++ net/minecraft/src/ThreadDownloadResources.java
-@@ -1,11 +1,9 @@
- package net.minecraft.src;
- 
--import java.io.DataInputStream;
--import java.io.DataOutputStream;
--import java.io.File;
--import java.io.FileOutputStream;
--import java.io.IOException;
-+import java.io.*;
- import java.net.URL;
-+import java.nio.file.Files;
-+import java.nio.file.StandardCopyOption;
- import javax.xml.parsers.DocumentBuilder;
- import javax.xml.parsers.DocumentBuilderFactory;
- import net.minecraft.client.Minecraft;
-@@ -31,6 +29,36 @@
- 
- 	public void run() {
- 		try {
-+			this.loadPackedResource("/net/minecraft/client/remix.ogg", "newsound/random/remix.ogg");
-+			this.loadPackedResource("/net/minecraft/client/remixquick.ogg", "newsound/random/remixquick.ogg");
-+			this.loadPackedResource("/net/minecraft/client/amalgamation.ogg", "newsound/random/amalgamation.ogg");
-+			this.loadPackedResource("/net/minecraft/client/overamalgamation.ogg", "newsound/random/overamalgamation.ogg");
-+			this.loadPackedResource("/net/minecraft/client/biggerexplosion.ogg", "newsound/mob/biggerexplosion.ogg");
-+
-+			this.loadPackedResource("/net/minecraft/client/offices.ogg", "streaming/offices.ogg");
-+			this.loadPackedResource("/net/minecraft/client/offices_intro.ogg", "streaming/offices_intro.ogg");
-+			this.loadPackedResource("/net/minecraft/client/calm4.ogg", "music/calm4.ogg");
-+			this.loadPackedResource("/net/minecraft/client/hotel.ogg", "streaming/hotel.ogg");
-+			this.loadPackedResource("/net/minecraft/client/noway.ogg", "streaming/noway.ogg");
-+
-+			this.loadPackedResource("/net/minecraft/client/endermen/death.ogg", "newsound/mob/endermen/death.ogg");
-+			this.loadPackedResource("/net/minecraft/client/endermen/hit#.ogg", "newsound/mob/endermen/hit#.ogg", 4);
-+			this.loadPackedResource("/net/minecraft/client/endermen/idle#.ogg", "newsound/mob/endermen/idle#.ogg", 5);
-+			this.loadPackedResource("/net/minecraft/client/endermen/portal.ogg", "newsound/mob/endermen/portal.ogg");
-+			this.loadPackedResource("/net/minecraft/client/endermen/portal2.ogg", "newsound/mob/endermen/portal2.ogg");
-+			this.loadPackedResource("/net/minecraft/client/endermen/scream#.ogg", "newsound/mob/endermen/scream#.ogg", 4);
-+			this.loadPackedResource("/net/minecraft/client/endermen/stare.ogg", "newsound/mob/endermen/stare.ogg");
-+
-+			this.loadPackedResource("/net/minecraft/client/blaze/breathe#.ogg", "newsound/mob/blaze/breathe#.ogg", 4);
-+			this.loadPackedResource("/net/minecraft/client/blaze/death.ogg", "newsound/mob/blaze/death.ogg");
-+			this.loadPackedResource("/net/minecraft/client/blaze/hit#.ogg", "newsound/mob/blaze/hit#.ogg", 4);
-+
-+			this.loadPackedResource("/net/minecraft/client/enderdragon/charge.ogg", "newsound/mob/enderdragon/charge.ogg");
-+			this.loadPackedResource("/net/minecraft/client/enderdragon/growl#.ogg", "newsound/mob/enderdragon/growl#.ogg", 4);
-+			this.loadPackedResource("/net/minecraft/client/enderdragon/hit#.ogg", "newsound/mob/enderdragon/hit#.ogg", 4);
-+
-+			this.loadPackedResource("/net/minecraft/client/staggo/idle#.ogg", "newsound/mob/staggo/idle#.ogg", 8);
-+
- 			URL var1 = new URL("http://s3.amazonaws.com/MinecraftResources/");
- 			DocumentBuilderFactory var2 = DocumentBuilderFactory.newInstance();
- 			DocumentBuilder var3 = var2.newDocumentBuilder();
-@@ -58,6 +86,21 @@
- 			var13.printStackTrace();
- 		}
- 
-+	}
-+
-+	private void loadPackedResource(String inPath, String outPath) throws IOException {
-+		InputStream stream = this.getClass().getResourceAsStream(inPath);
-+		if (stream == null) throw new IOException("Resource " + inPath + " is invalid.");
-+		File file = new File(this.resourcesFolder, outPath);
-+		file.mkdirs();
-+		Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-+		this.mc.installResource(outPath, file);
-+	}
-+
-+	private void loadPackedResource(String inPath, String outPath, int count) throws IOException {
-+		for (int i = 1; i <= count; i++) {
-+			this.loadPackedResource(inPath.replace("#", String.valueOf(i)), outPath.replace("#", String.valueOf(i)));
-+		}
- 	}
- 
- 	public void reloadResources() {
 --- net/minecraft/src/WorldInfo.java
 +++ net/minecraft/src/WorldInfo.java
 @@ -1,6 +1,7 @@
@@ -8404,6 +8373,84 @@
 +		});
  	}
  }
+--- net/minecraft/src/ThreadDownloadResources.java
++++ net/minecraft/src/ThreadDownloadResources.java
+@@ -1,11 +1,9 @@
+ package net.minecraft.src;
+ 
+-import java.io.DataInputStream;
+-import java.io.DataOutputStream;
+-import java.io.File;
+-import java.io.FileOutputStream;
+-import java.io.IOException;
++import java.io.*;
+ import java.net.URL;
++import java.nio.file.Files;
++import java.nio.file.StandardCopyOption;
+ import javax.xml.parsers.DocumentBuilder;
+ import javax.xml.parsers.DocumentBuilderFactory;
+ import net.minecraft.client.Minecraft;
+@@ -31,6 +29,38 @@
+ 
+ 	public void run() {
+ 		try {
++			this.loadPackedResource("/net/minecraft/client/remix.ogg", "newsound/random/remix.ogg");
++			this.loadPackedResource("/net/minecraft/client/remixquick.ogg", "newsound/random/remixquick.ogg");
++			this.loadPackedResource("/net/minecraft/client/amalgamation.ogg", "newsound/random/amalgamation.ogg");
++			this.loadPackedResource("/net/minecraft/client/overamalgamation.ogg", "newsound/random/overamalgamation.ogg");
++			this.loadPackedResource("/net/minecraft/client/biggerexplosion.ogg", "newsound/mob/biggerexplosion.ogg");
++
++			this.loadPackedResource("/net/minecraft/client/offices.ogg", "streaming/offices.ogg");
++			this.loadPackedResource("/net/minecraft/client/offices_intro.ogg", "streaming/offices_intro.ogg");
++			this.loadPackedResource("/net/minecraft/client/calm4.ogg", "music/calm4.ogg");
++			this.loadPackedResource("/net/minecraft/client/hotel.ogg", "streaming/hotel.ogg");
++			this.loadPackedResource("/net/minecraft/client/noway.ogg", "streaming/noway.ogg");
++
++			this.loadPackedResource("/net/minecraft/client/endermen/death.ogg", "newsound/mob/endermen/death.ogg");
++			this.loadPackedResource("/net/minecraft/client/endermen/hit#.ogg", "newsound/mob/endermen/hit#.ogg", 4);
++			this.loadPackedResource("/net/minecraft/client/endermen/idle#.ogg", "newsound/mob/endermen/idle#.ogg", 5);
++			this.loadPackedResource("/net/minecraft/client/endermen/portal.ogg", "newsound/mob/endermen/portal.ogg");
++			this.loadPackedResource("/net/minecraft/client/endermen/portal2.ogg", "newsound/mob/endermen/portal2.ogg");
++			this.loadPackedResource("/net/minecraft/client/endermen/scream#.ogg", "newsound/mob/endermen/scream#.ogg", 4);
++			this.loadPackedResource("/net/minecraft/client/endermen/stare.ogg", "newsound/mob/endermen/stare.ogg");
++
++			this.loadPackedResource("/net/minecraft/client/blaze/breathe#.ogg", "newsound/mob/blaze/breathe#.ogg", 4);
++			this.loadPackedResource("/net/minecraft/client/blaze/death.ogg", "newsound/mob/blaze/death.ogg");
++			this.loadPackedResource("/net/minecraft/client/blaze/hit#.ogg", "newsound/mob/blaze/hit#.ogg", 4);
++
++			this.loadPackedResource("/net/minecraft/client/enderdragon/charge.ogg", "newsound/mob/enderdragon/charge.ogg");
++			this.loadPackedResource("/net/minecraft/client/enderdragon/growl#.ogg", "newsound/mob/enderdragon/growl#.ogg", 4);
++			this.loadPackedResource("/net/minecraft/client/enderdragon/hit#.ogg", "newsound/mob/enderdragon/hit#.ogg", 4);
++
++            this.loadPackedResource("/net/minecraft/client/random/funny.ogg", "newsound/random/funny.ogg");
++
++			this.loadPackedResource("/net/minecraft/client/staggo/idle#.ogg", "newsound/mob/staggo/idle#.ogg", 8);
++
+ 			URL var1 = new URL("http://s3.amazonaws.com/MinecraftResources/");
+ 			DocumentBuilderFactory var2 = DocumentBuilderFactory.newInstance();
+ 			DocumentBuilder var3 = var2.newDocumentBuilder();
+@@ -58,6 +88,21 @@
+ 			var13.printStackTrace();
+ 		}
+ 
++	}
++
++	private void loadPackedResource(String inPath, String outPath) throws IOException {
++		InputStream stream = this.getClass().getResourceAsStream(inPath);
++		if (stream == null) throw new IOException("Resource " + inPath + " is invalid.");
++		File file = new File(this.resourcesFolder, outPath);
++		file.mkdirs();
++		Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
++		this.mc.installResource(outPath, file);
++	}
++
++	private void loadPackedResource(String inPath, String outPath, int count) throws IOException {
++		for (int i = 1; i <= count; i++) {
++			this.loadPackedResource(inPath.replace("#", String.valueOf(i)), outPath.replace("#", String.valueOf(i)));
++		}
+ 	}
+ 
+ 	public void reloadResources() {
 --- net/minecraft/src/BlockFluid.java
 +++ net/minecraft/src/BlockFluid.java
 @@ -16,6 +16,31 @@
@@ -9351,6 +9398,21 @@
 +    runOverlappingModel();
 +  }
 +}
+--- net/minecraft/src/EntityChicken.java
++++ net/minecraft/src/EntityChicken.java
+@@ -13,8 +13,11 @@
+ 		super(var1);
+ 		this.texture = "/mob/chicken.png";
+ 		this.setSize(0.3F, 0.7F);
+-		this.health = 4;
+ 		this.timeUntilNextEgg = this.rand.nextInt(6000) + 6000;
++	}
++
++	public int getMaxHealth() {
++		return 4;
+ 	}
+ 
+ 	public void onLivingUpdate() {
 --- net/minecraft/src/Entity.java
 +++ net/minecraft/src/Entity.java
 @@ -47,7 +47,7 @@
@@ -9433,21 +9495,6 @@
 +		return null;
  	}
  }
---- net/minecraft/src/EntityChicken.java
-+++ net/minecraft/src/EntityChicken.java
-@@ -13,8 +13,11 @@
- 		super(var1);
- 		this.texture = "/mob/chicken.png";
- 		this.setSize(0.3F, 0.7F);
--		this.health = 4;
- 		this.timeUntilNextEgg = this.rand.nextInt(6000) + 6000;
-+	}
-+
-+	public int getMaxHealth() {
-+		return 4;
- 	}
- 
- 	public void onLivingUpdate() {
 --- net/minecraft/src/IInventory.java
 +++ net/minecraft/src/IInventory.java
 @@ -20,4 +20,8 @@
@@ -12840,17 +12887,6 @@
  		return var1;
  	}
  
---- net/minecraft/src/EntitySlime.java
-+++ net/minecraft/src/EntitySlime.java
-@@ -134,7 +134,7 @@
- 
- 	public boolean getCanSpawnHere() {
- 		Chunk var1 = this.worldObj.getChunkFromBlockCoords(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posZ));
--		return (this.getSlimeSize() == 1 || this.worldObj.difficultySetting > 0) && this.rand.nextInt(10) == 0 && var1.func_997_a(987234911L).nextInt(10) == 0 && this.posY < 16.0D;
-+		return (this.getSlimeSize() == 1 || this.worldObj.difficultySetting > 0) && this.rand.nextInt(10) == 0 && var1.getRandomWithSeed(987234911L).nextInt(10) == 0 && this.posY < 16.0D;
- 	}
- 
- 	protected float getSoundVolume() {
 --- net/minecraft/src/TileEntityChest.java
 +++ net/minecraft/src/TileEntityChest.java
 @@ -1,6 +1,6 @@
@@ -12883,6 +12919,17 @@
  				}
  			}
  		}
+--- net/minecraft/src/EntitySlime.java
++++ net/minecraft/src/EntitySlime.java
+@@ -134,7 +134,7 @@
+ 
+ 	public boolean getCanSpawnHere() {
+ 		Chunk var1 = this.worldObj.getChunkFromBlockCoords(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posZ));
+-		return (this.getSlimeSize() == 1 || this.worldObj.difficultySetting > 0) && this.rand.nextInt(10) == 0 && var1.func_997_a(987234911L).nextInt(10) == 0 && this.posY < 16.0D;
++		return (this.getSlimeSize() == 1 || this.worldObj.difficultySetting > 0) && this.rand.nextInt(10) == 0 && var1.getRandomWithSeed(987234911L).nextInt(10) == 0 && this.posY < 16.0D;
+ 	}
+ 
+ 	protected float getSoundVolume() {
 --- net/minecraft/src/BlockGrass.java
 +++ net/minecraft/src/BlockGrass.java
 @@ -25,6 +25,8 @@
@@ -14884,44 +14931,6 @@
  	}
  
  	public NBTTagCompound getCompoundTag(String var1) {
---- net/minecraft/src/MapStorage.java
-+++ net/minecraft/src/MapStorage.java
-@@ -29,7 +29,7 @@
- 		} else {
- 			if(this.saveHandler != null) {
- 				try {
--					File var4 = this.saveHandler.func_28113_a(var2);
-+					File var4 = this.saveHandler.getMapFileFromName(var2);
- 					if(var4 != null && var4.exists()) {
- 						try {
- 							var3 = (MapDataBase)var1.getConstructor(new Class[]{String.class}).newInstance(new Object[]{var2});
-@@ -83,7 +83,7 @@
- 	private void saveData(MapDataBase var1) {
- 		if(this.saveHandler != null) {
- 			try {
--				File var2 = this.saveHandler.func_28113_a(var1.field_28168_a);
-+				File var2 = this.saveHandler.getMapFileFromName(var1.field_28168_a);
- 				if(var2 != null) {
- 					NBTTagCompound var3 = new NBTTagCompound();
- 					var1.writeToNBT(var3);
-@@ -107,7 +107,7 @@
- 				return;
- 			}
- 
--			File var1 = this.saveHandler.func_28113_a("idcounts");
-+			File var1 = this.saveHandler.getMapFileFromName("idcounts");
- 			if(var1 != null && var1.exists()) {
- 				DataInputStream var2 = new DataInputStream(new FileInputStream(var1));
- 				NBTTagCompound var3 = CompressedStreamTools.func_1141_a(var2);
-@@ -143,7 +143,7 @@
- 			return var2.shortValue();
- 		} else {
- 			try {
--				File var3 = this.saveHandler.func_28113_a("idcounts");
-+				File var3 = this.saveHandler.getMapFileFromName("idcounts");
- 				if(var3 != null) {
- 					NBTTagCompound var4 = new NBTTagCompound();
- 					Iterator var5 = this.idCounts.keySet().iterator();
 --- net/minecraft/src/StructureVillageStart.java
 +++ net/minecraft/src/StructureVillageStart.java
 @@ -8,40 +8,54 @@
@@ -15013,6 +15022,44 @@
  	}
  
  	public boolean func_35715_c() {
+--- net/minecraft/src/MapStorage.java
++++ net/minecraft/src/MapStorage.java
+@@ -29,7 +29,7 @@
+ 		} else {
+ 			if(this.saveHandler != null) {
+ 				try {
+-					File var4 = this.saveHandler.func_28113_a(var2);
++					File var4 = this.saveHandler.getMapFileFromName(var2);
+ 					if(var4 != null && var4.exists()) {
+ 						try {
+ 							var3 = (MapDataBase)var1.getConstructor(new Class[]{String.class}).newInstance(new Object[]{var2});
+@@ -83,7 +83,7 @@
+ 	private void saveData(MapDataBase var1) {
+ 		if(this.saveHandler != null) {
+ 			try {
+-				File var2 = this.saveHandler.func_28113_a(var1.field_28168_a);
++				File var2 = this.saveHandler.getMapFileFromName(var1.field_28168_a);
+ 				if(var2 != null) {
+ 					NBTTagCompound var3 = new NBTTagCompound();
+ 					var1.writeToNBT(var3);
+@@ -107,7 +107,7 @@
+ 				return;
+ 			}
+ 
+-			File var1 = this.saveHandler.func_28113_a("idcounts");
++			File var1 = this.saveHandler.getMapFileFromName("idcounts");
+ 			if(var1 != null && var1.exists()) {
+ 				DataInputStream var2 = new DataInputStream(new FileInputStream(var1));
+ 				NBTTagCompound var3 = CompressedStreamTools.func_1141_a(var2);
+@@ -143,7 +143,7 @@
+ 			return var2.shortValue();
+ 		} else {
+ 			try {
+-				File var3 = this.saveHandler.func_28113_a("idcounts");
++				File var3 = this.saveHandler.getMapFileFromName("idcounts");
+ 				if(var3 != null) {
+ 					NBTTagCompound var4 = new NBTTagCompound();
+ 					Iterator var5 = this.idCounts.keySet().iterator();
 --- /dev/null
 +++ net/minecraft/src/GenLayerSubBiomes.java
 @@ -1,0 +1,35 @@
@@ -18058,6 +18105,41 @@
  								}
  							}
  						}
+--- net/minecraft/src/SaveHandlerMP.java
++++ net/minecraft/src/SaveHandlerMP.java
+@@ -21,7 +21,11 @@
+ 	public void saveWorldInfo(WorldInfo var1) {
+ 	}
+ 
+-	public File func_28113_a(String var1) {
++	public File getMapFileFromName(String var1) {
+ 		return null;
++	}
++
++	public String getSaveDirectoryName() {
++		return "none";
+ 	}
+ }
+--- net/minecraft/src/GuiSlotServer.java
++++ net/minecraft/src/GuiSlotServer.java
+@@ -6,7 +6,7 @@
+ 	final GuiMultiplayer field_35410_a;
+ 
+ 	public GuiSlotServer(GuiMultiplayer var1) {
+-		super(var1.mc, var1.width, var1.height, 32, var1.height - 64, 36);
++		super(var1.game, var1.width, var1.height, 32, var1.height - 64, 36);
+ 		this.field_35410_a = var1;
+ 	}
+ 
+@@ -57,7 +57,7 @@
+ 		this.field_35410_a.drawString(this.field_35410_a.fontRenderer, var6.field_35794_c, var2 + 215 - this.field_35410_a.fontRenderer.getStringWidth(var6.field_35794_c), var3 + 12, 8421504);
+ 		this.field_35410_a.drawString(this.field_35410_a.fontRenderer, var6.field_35793_b, var2 + 2, var3 + 12 + 11, 3158064);
+ 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+-		this.field_35410_a.mc.renderEngine.bindTexture(this.field_35410_a.mc.renderEngine.getTexture("/gui/icons.png"));
++		this.field_35410_a.game.renderEngine.bindTexture(this.field_35410_a.game.renderEngine.getTexture("/gui/icons.png"));
+ 		boolean var12 = false;
+ 		boolean var8 = false;
+ 		String var9 = "";
 --- net/minecraft/src/GuiMultiplayer.java
 +++ net/minecraft/src/GuiMultiplayer.java
 @@ -44,7 +44,7 @@
@@ -18152,41 +18234,6 @@
  	}
  
  	private void func_35328_b(ServerNBTStorage var1) throws IOException {
---- net/minecraft/src/GuiSlotServer.java
-+++ net/minecraft/src/GuiSlotServer.java
-@@ -6,7 +6,7 @@
- 	final GuiMultiplayer field_35410_a;
- 
- 	public GuiSlotServer(GuiMultiplayer var1) {
--		super(var1.mc, var1.width, var1.height, 32, var1.height - 64, 36);
-+		super(var1.game, var1.width, var1.height, 32, var1.height - 64, 36);
- 		this.field_35410_a = var1;
- 	}
- 
-@@ -57,7 +57,7 @@
- 		this.field_35410_a.drawString(this.field_35410_a.fontRenderer, var6.field_35794_c, var2 + 215 - this.field_35410_a.fontRenderer.getStringWidth(var6.field_35794_c), var3 + 12, 8421504);
- 		this.field_35410_a.drawString(this.field_35410_a.fontRenderer, var6.field_35793_b, var2 + 2, var3 + 12 + 11, 3158064);
- 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
--		this.field_35410_a.mc.renderEngine.bindTexture(this.field_35410_a.mc.renderEngine.getTexture("/gui/icons.png"));
-+		this.field_35410_a.game.renderEngine.bindTexture(this.field_35410_a.game.renderEngine.getTexture("/gui/icons.png"));
- 		boolean var12 = false;
- 		boolean var8 = false;
- 		String var9 = "";
---- net/minecraft/src/SaveHandlerMP.java
-+++ net/minecraft/src/SaveHandlerMP.java
-@@ -21,7 +21,11 @@
- 	public void saveWorldInfo(WorldInfo var1) {
- 	}
- 
--	public File func_28113_a(String var1) {
-+	public File getMapFileFromName(String var1) {
- 		return null;
-+	}
-+
-+	public String getSaveDirectoryName() {
-+		return "none";
- 	}
- }
 --- net/minecraft/src/TileEntityDispenser.java
 +++ net/minecraft/src/TileEntityDispenser.java
 @@ -2,7 +2,7 @@
@@ -21935,7 +21982,7 @@
  		}
  
  	}
-@@ -650,17 +662,26 @@
+@@ -650,17 +662,30 @@
  			var4 = 0;
  		}
  
@@ -21947,6 +21994,10 @@
  
  		for(int var6 = var4; var6 <= var5; ++var6) {
 -			List var7 = this.entities[var6];
++            if (var6 >= this.entityLists.length || var6 < 0) {
++				continue;
++			}
++
 +			List var7 = this.entityLists[var6];
  
  			for(int var8 = 0; var8 < var7.size(); ++var8) {
@@ -21965,7 +22016,7 @@
  				}
  			}
  		}
-@@ -672,14 +693,18 @@
+@@ -672,14 +697,22 @@
  		int var5 = MathHelper.floor_double((var2.maxY + 2.0D) / 16.0D);
  		if(var4 < 0) {
  			var4 = 0;
@@ -21983,11 +22034,15 @@
  
  		for(int var6 = var4; var6 <= var5; ++var6) {
 -			List var7 = this.entities[var6];
++			if (var6 >= this.entityLists.length || var6 < 0) {
++				continue;
++			}
++
 +			List var7 = this.entityLists[var6];
  
  			for(int var8 = 0; var8 < var7.size(); ++var8) {
  				Entity var9 = (Entity)var7.get(var8);
-@@ -694,98 +719,39 @@
+@@ -694,98 +727,39 @@
  	public boolean needsSaving(boolean var1) {
  		if(this.neverSave) {
  			return false;
@@ -22109,7 +22164,7 @@
  		if(!this.isTerrainPopulated && var1.chunkExists(var3 + 1, var4 + 1) && var1.chunkExists(var3, var4 + 1) && var1.chunkExists(var3 + 1, var4)) {
  			var1.populate(var2, var3, var4);
  		}
-@@ -804,12 +770,11 @@
+@@ -804,12 +778,11 @@
  
  	}
  
@@ -22125,7 +22180,7 @@
  			var4 = -1;
  
  			while(true) {
-@@ -823,7 +788,7 @@
+@@ -823,7 +796,7 @@
  					}
  				}
  
@@ -22134,7 +22189,7 @@
  				break;
  			}
  		}
-@@ -831,7 +796,163 @@
+@@ -831,7 +804,163 @@
  		return var4;
  	}
  
@@ -29365,19 +29420,6 @@
  		if(!this.mc.running) {
  			if(!this.field_1005_e) {
  				throw new MinecraftError();
---- net/minecraft/src/RenderSpider.java
-+++ net/minecraft/src/RenderSpider.java
-@@ -15,9 +15,7 @@
- 	}
- 
- 	protected boolean setSpiderEyeBrightness(EntitySpider var1, int var2, float var3) {
--		if(var2 != 0) {
--			return false;
--		} else if(var2 != 0) {
-+		if(var2 != 0 || Personalization.brownSpiders) {
- 			return false;
- 		} else {
- 			this.loadTexture("/mob/spider_eyes.png");
 --- net/minecraft/src/WorldChunkManagerHell.java
 +++ net/minecraft/src/WorldChunkManagerHell.java
 @@ -8,11 +8,13 @@
@@ -29404,6 +29446,19 @@
 +		return this.stoneGradient;
  	}
  }
+--- net/minecraft/src/RenderSpider.java
++++ net/minecraft/src/RenderSpider.java
+@@ -15,9 +15,7 @@
+ 	}
+ 
+ 	protected boolean setSpiderEyeBrightness(EntitySpider var1, int var2, float var3) {
+-		if(var2 != 0) {
+-			return false;
+-		} else if(var2 != 0) {
++		if(var2 != 0 || Personalization.brownSpiders) {
+ 			return false;
+ 		} else {
+ 			this.loadTexture("/mob/spider_eyes.png");
 --- net/minecraft/src/GuiWorldSlot.java
 +++ net/minecraft/src/GuiWorldSlot.java
 @@ -6,7 +6,7 @@
